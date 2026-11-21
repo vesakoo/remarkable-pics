@@ -33,6 +33,7 @@ architecture diagrams.
 
 | | Notebook | Made from | Strokes |
 |---|---|---|---|
+| <img src="drawings/aws-architecture/aws-architecture.png" width="160"> | [aws-architecture.rmdoc](drawings/aws-architecture/aws-architecture.rmdoc) | [examples/aws_architecture.py](../examples/aws_architecture.py) | 1259 |
 | <img src="drawings/owl/owl.png" width="160"> | [owl.rmdoc](drawings/owl/owl.rmdoc) | [examples/owl.json](../examples/owl.json) | 799 |
 | <img src="drawings/fox/fox.png" width="160"> | [fox.rmdoc](drawings/fox/fox.rmdoc) · [on tablet](drawings/fox/tablet/fox-tablet.png) | [examples/fox.json](../examples/fox.json) | 235 |
 | <img src="drawings/smiley/smiley.png" width="160"> | [smiley.rmdoc](drawings/smiley/smiley.rmdoc) | [examples/smiley.json](../examples/smiley.json) | 175 |

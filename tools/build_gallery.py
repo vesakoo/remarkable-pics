@@ -74,6 +74,9 @@ def main() -> None:
             sys.exit(f"missing {aws_icons.VENDOR}; download the AWS icon package or use --skip-aws")
         doc, _ = aws_icons.build()
         publish(doc, OUT / "aws-icons", "aws-icons-top50")
+        import aws_architecture
+        publish(aws_architecture.build(), OUT / "drawings" / "aws-architecture",
+                "aws-architecture")
 
     import calibration
     import fox_v2
