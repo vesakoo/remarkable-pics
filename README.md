@@ -1,24 +1,48 @@
 # remarkable-pics
 
-**Draw on a reMarkable Paper Pro with code — as real, editable pen strokes.**
+**Symbol libraries for the reMarkable Paper Pro — official icons as real pen strokes you
+can copy, paste and scale into any notebook. Built and extended with Claude.**
 
-`rmdraw` turns a short description, an SVG file or an icon set into a native reMarkable
-notebook (`.rmdoc`). Every line in it is an ordinary pen stroke, exactly as if you had
-drawn it with the Marker yourself: you can erase it, lasso it, move it, copy it and scale
-it on the tablet.
+## The gap this fills
 
-<p align="center">
-  <img src="out/drawings/owl/owl.png" width="30%" alt="An owl on a branch, drawn as pen strokes">
-  <img src="out/drawings/fox/fox.png" width="30%" alt="A geometric fox head">
-  <img src="out/drawings/smiley/smiley.png" width="30%" alt="A yellow smiley face">
-</p>
+The reMarkable is a great place to think on paper: architecture sketches, presentation
+storyboards, blueprints, process maps. But it has **no stencil or icon library**. If your
+diagram needs an AWS Lambda icon, a database cylinder or a firewall symbol, you draw it by
+hand — every time, slightly different, and never quite the official one.
 
-## ⭐ 50 AWS architecture icons, hand-drawn style
+The usual workarounds don't help:
+
+- **Import a PDF or image of the icons:** it lands as a frozen background. You can look at
+  it, but you can't lasso one icon and carry it into another notebook.
+- **Templates:** a fixed background for the whole page, not a set of parts to pick from.
+- **Draw it yourself:** slow, inconsistent, and the reason diagrams stay messy.
+
+**This repo turns icon sets into native reMarkable notebooks.** Every icon is made of ordinary
+pen strokes, exactly as if you had drawn it, so the tablet treats it like your own ink.
+
+## How you use it on the tablet
+
+```mermaid
+flowchart LR
+    L["📚 Symbols notebook<br/>(e.g. AWS icons)"] -- "lasso + copy" --> C(("clipboard"))
+    C -- "paste, move, scale" --> W["✏️ Your working notebook<br/>(diagram, slide sketch, blueprint)"]
+    W -- "connect with your own pen:<br/>arrows, labels, notes" --> W
+```
+
+1. Keep a **symbols notebook** next to your work, e.g. the AWS icon sheet below.
+2. **Lasso** the icon you need (with its title if you want it) and **copy** it.
+3. Switch to the notebook you're working in and **paste**. Move and scale it to fit.
+4. Draw the arrows, boundaries and notes by hand. The pasted icons stay fully editable:
+   erase part of one, recolour it, resize it.
+
+The result: diagrams with clean, official-looking symbols and your own handwriting around
+them, made in minutes on the tablet.
+
+## ⭐ Ready now: 50 AWS architecture icons
 
 **[Download `aws-icons-top50.rmdoc`](out/aws-icons/aws-icons-top50.rmdoc)** and drag it into
 the reMarkable desktop app: four pages with the 50 most-used AWS services, each a coloured,
-outlined icon with its name written underneath. Lasso any icon, copy it into your notes,
-scale it — and sketch architecture diagrams by hand on the tablet.
+outlined icon with its name written underneath, grouped by category.
 
 <p align="center">
   <img src="out/aws-icons/aws-icons-top50-p1.png" width="24%" alt="AWS icons: compute and storage">
@@ -27,22 +51,43 @@ scale it — and sketch architecture diagrams by hand on the tablet.
   <img src="out/aws-icons/aws-icons-top50-p4.png" width="24%" alt="AWS icons: security, management, AI/ML">
 </p>
 
-More ready-to-import notebooks (owl, fox, smiley, tree, calibration pages) are in the
+## Grow your own library with Claude
+
+The repo includes a [Claude Code skill](.claude/skills/remarkable-native/SKILL.md) that knows
+the reMarkable format. Open the project in Claude Code and ask for the symbols *you* need:
+
+| You ask Claude… | What you get |
+|---|---|
+| *"Add the next 50 AWS icons: IoT, migration, containers"* | More pages for the AWS library, same style |
+| *"Make me an Azure (or GCP) networking icon sheet"* | A new library from the official SVG package you download |
+| *"Flowchart and BPMN symbols, with labels"* | Start/end, process, decision, gateway, event shapes |
+| *"Network diagram symbols: router, switch, firewall, server, cloud"* | Generic infrastructure symbols, drawn from a description |
+| *"Floor-plan symbols: doors, windows, stairs, furniture at 1:50"* | Blueprint parts that you paste and scale |
+| *"Presentation doodles: people, arrows, speech bubbles, icons for ideas"* | A storyboard kit for slide sketches |
+
+Claude converts SVGs where an official set exists, draws simple symbols from a description
+where none does, previews the pages, fixes what looks off, and hands you a `.rmdoc` to drag
+into the desktop app. Your library grows as your work needs it.
+
+Icon artwork stays the property of its owners (e.g. AWS); use official sets under their terms.
+
+## Not just icons
+
+The same engine draws anything from a description: these were made by asking Claude for
+"an owl", "a fox", "a smiley face". More ready-to-import notebooks are in the
 **[gallery](out/README.md)**.
 
-## The problem
+<p align="center">
+  <img src="out/drawings/owl/owl.png" width="30%" alt="An owl on a branch, drawn as pen strokes">
+  <img src="out/drawings/fox/fox.png" width="30%" alt="A geometric fox head">
+  <img src="out/drawings/smiley/smiley.png" width="30%" alt="A yellow smiley face">
+</p>
 
-Getting a picture onto a reMarkable usually means importing a **PDF or an image**. That
-works for reading, but the result is a frozen background layer: you can write on top of
-it, but you can't pick up a single icon, recolour a shape, erase half a line or scale one
-part of the drawing. Diagrams, icon sheets and sketches you want to *work with* end up
-dead on the page.
+## Under the hood
 
-## The solution
-
-This project writes the reMarkable's own notebook format directly: v6 `.rm` scene files
-full of pen strokes (fineliner outlines, shader fills, stroke-font text), packed as a
-`.rmdoc` that the desktop app imports like any notebook.
+`rmdraw` writes the reMarkable's own notebook format directly: v6 `.rm` scene files full of
+pen strokes (fineliner outlines, shader fills, stroke-font text), packed as a `.rmdoc` that
+the desktop app imports like any notebook.
 
 - **No PDF, no embedded image, no template.** Strokes only.
 - **Editable on the tablet:** lasso, copy, move, scale, erase — it all just works.
@@ -57,7 +102,7 @@ full of pen strokes (fineliner outlines, shader fills, stroke-font text), packed
   <br><sub>Rendered by the tablet itself (device thumbnails): the fox and the first page of the AWS icon sheet.</sub>
 </p>
 
-## How it works
+### How it works
 
 ```mermaid
 flowchart LR
