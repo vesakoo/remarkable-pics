@@ -79,6 +79,9 @@ def main() -> None:
         publish(aws_architecture.build(), OUT / "drawings" / "aws-architecture",
                 "aws-architecture")
 
+    import quantum_gates
+    publish(quantum_gates.build(), OUT / "symbols" / "quantum-gates", "quantum-gates")
+
     import calibration
     import fox_v2
     p2, _ = calibration.page2()
