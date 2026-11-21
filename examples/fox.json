@@ -1,4 +1,4 @@
-{"name":"Fox v2","pages":[[
+{"name":"Fox","pages":[[
 {"type":"polyline","closed":true,"width_mm":0.8,"fill":{"color":"#ff5a00"},
  "points":[[45,30],[68,74],[112,74],[135,30],[147,100],[160,135],[90,205],[20,135],[33,100]]},
 {"type":"polyline","closed":true,"fill":{"color":"black"},"points":[[46,43],[41,70],[61,70]]},

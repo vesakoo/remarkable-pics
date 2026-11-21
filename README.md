@@ -8,10 +8,27 @@ drawn it with the Marker yourself: you can erase it, lasso it, move it, copy it 
 it on the tablet.
 
 <p align="center">
-  <img src="docs/images/owl.png" width="30%" alt="An owl on a branch, drawn as pen strokes">
-  <img src="docs/images/fox.png" width="30%" alt="A geometric fox head">
-  <img src="docs/images/smiley.png" width="30%" alt="A yellow smiley face">
+  <img src="out/drawings/owl/owl.png" width="30%" alt="An owl on a branch, drawn as pen strokes">
+  <img src="out/drawings/fox/fox.png" width="30%" alt="A geometric fox head">
+  <img src="out/drawings/smiley/smiley.png" width="30%" alt="A yellow smiley face">
 </p>
+
+## ⭐ 50 AWS architecture icons, hand-drawn style
+
+**[Download `aws-icons-top50.rmdoc`](out/aws-icons/aws-icons-top50.rmdoc)** and drag it into
+the reMarkable desktop app: four pages with the 50 most-used AWS services, each a coloured,
+outlined icon with its name written underneath. Lasso any icon, copy it into your notes,
+scale it — and sketch architecture diagrams by hand on the tablet.
+
+<p align="center">
+  <img src="out/aws-icons/aws-icons-top50-p1.png" width="24%" alt="AWS icons: compute and storage">
+  <img src="out/aws-icons/aws-icons-top50-p2.png" width="24%" alt="AWS icons: database and networking">
+  <img src="out/aws-icons/aws-icons-top50-p3.png" width="24%" alt="AWS icons: integration and analytics">
+  <img src="out/aws-icons/aws-icons-top50-p4.png" width="24%" alt="AWS icons: security, management, AI/ML">
+</p>
+
+More ready-to-import notebooks (owl, fox, smiley, tree, calibration pages) are in the
+**[gallery](out/README.md)**.
 
 ## The problem
 
@@ -35,8 +52,8 @@ full of pen strokes (fineliner outlines, shader fills, stroke-font text), packed
   measured on a real Paper Pro (see [`docs/format-notes.md`](docs/format-notes.md)).
 
 <p align="center">
-  <img src="docs/images/fox-on-tablet.png" width="32%" alt="The fox as rendered by the tablet itself">
-  <img src="docs/images/aws-on-tablet.png" width="32%" alt="AWS icon sheet as rendered by the tablet">
+  <img src="out/drawings/fox/tablet/fox-tablet.png" width="32%" alt="The fox as rendered by the tablet itself">
+  <img src="out/aws-icons/tablet/aws-icons-p1-tablet.png" width="32%" alt="AWS icon sheet as rendered by the tablet">
   <br><sub>Rendered by the tablet itself (device thumbnails): the fox and the first page of the AWS icon sheet.</sub>
 </p>
 
@@ -107,7 +124,7 @@ green yellow cyan magenta`). More examples: [`examples/owl.json`](examples/owl.j
 [`examples/fox.json`](examples/fox.json), [`examples/tree.json`](examples/tree.json).
 
 <p align="center">
-  <img src="docs/images/tree.png" width="30%" alt="A tree">
+  <img src="out/drawings/tree/tree.png" width="30%" alt="A tree">
 </p>
 
 ### Convert an SVG
@@ -163,14 +180,16 @@ Fill strokes are tuned on the real screen, not just in previews. A swatch page
 smoothest option can become the default.
 
 <p align="center">
-  <img src="docs/images/fill-swatches.png" width="40%" alt="Fill swatch calibration page">
+  <img src="out/calibration/fill-swatches.png" width="40%" alt="Fill swatch calibration page">
 </p>
 
 ## Project layout
 
 ```
+out/               the gallery: ready-to-import .rmdoc files + previews (see out/README.md)
 rmdraw/            the library and CLI (fill, text, svg import, writer, device)
 examples/          owl, fox, smiley, tree, AWS icon sheet, calibration pages
+tools/             build_gallery.py (rebuilds out/), dump_rm.py
 tests/             pytest suite, incl. reference notebooks drawn on the device
 docs/format-notes.md   what we know about the Paper Pro format, tagged by evidence
 .claude/skills/    the Claude Code skill
