@@ -10,7 +10,8 @@ from rmdraw.rmdoc import write_rmdoc
 
 
 class Fake:
-    def __init__(self, exists=False, thumbs_after=0):
+    def __init__(self, exists=False, thumbs_after=0, rc=None):
+        self.rc = rc
         self.cmds = []
         self.exists = exists
         self.thumbs_after = thumbs_after
@@ -24,11 +25,14 @@ class Fake:
         if cmd[0] == "ssh" and "thumbnails" in joined and "ls" in joined:
             self.ls_calls += 1
             if self.ls_calls > self.thumbs_after:
-                out = "/home/root/x/abc.thumbnails/0.png\n"
+                out = "/home/root/x/b9e10bde-1351-43f5-a32b-1f945c933961.thumbnails/0.png\n"
         elif cmd[0] == "ssh" and "ls" in joined:
             out = "somefile\n" if self.exists else ""
             rc = 0 if self.exists else 2
-        return SimpleNamespace(returncode=rc, stdout=out, stderr="")
+        err = "ls: No such file or directory" if rc == 2 else ""
+        if self.rc is not None and cmd[0] == "ssh" and "ls -d" in joined:
+            rc, out, err = self.rc, "", "ssh: connect to host: No route to host"
+        return SimpleNamespace(returncode=rc, stdout=out, stderr=err)
 
 
 def make(tmp_path):
@@ -63,9 +67,60 @@ def test_install_refuses_existing(tmp_path):
 
 def test_fetch_thumbnails(tmp_path):
     f = Fake(thumbs_after=1)
-    out = device.fetch_thumbnails("abc", tmp_path / "o", runner=f, wait_s=5, sleep=lambda s: None)
+    out = device.fetch_thumbnails("b9e10bde-1351-43f5-a32b-1f945c933961", tmp_path / "o", runner=f, wait_s=5, sleep=lambda s: None)
     assert all("BatchMode=yes" in c for c in f.cmds)
     assert f.ls_calls == 2
-    assert any(c[0] == "scp" and "abc.thumbnails" in c[-2] for c in f.cmds)
+    assert any(c[0] == "scp" and "b9e10bde-1351-43f5-a32b-1f945c933961.thumbnails" in c[-2] for c in f.cmds)
     assert (tmp_path / "o").is_dir()
     assert all("rm " not in " ".join(c) for c in f.cmds)
+
+
+def test_install_fails_closed_on_ssh_error(tmp_path):
+    p, _ = make(tmp_path)
+    f = Fake(rc=255)
+    with pytest.raises(RuntimeError):
+        device.install_rmdoc(p, runner=f)
+    assert not any(c[0] == "scp" for c in f.cmds)
+    assert not any("restart" in " ".join(c) for c in f.cmds)
+
+
+def _zip(tmp_path, names):
+    p = tmp_path / "h.rmdoc"
+    with zipfile.ZipFile(p, "w") as z:
+        for n in names:
+            z.writestr(n, "x")
+    return p
+
+
+U = "b9e10bde-1351-43f5-a32b-1f945c933961"
+P = "e69a9c4e-4635-48f2-8e3f-f7b5696d40e6"
+
+
+def test_install_rejects_hostile_name(tmp_path):
+    p = _zip(tmp_path, ["x; reboot #.content", "x; reboot #.metadata", f"x; reboot #/{P}.rm"])
+    f = Fake()
+    with pytest.raises(ValueError):
+        device.install_rmdoc(p, runner=f)
+    assert f.cmds == []
+
+
+@pytest.mark.parametrize("extra", ["../evil", "/etc/passwd", f"{U}/../x.rm", f"{U}/notes.txt"])
+def test_install_rejects_extra_entry(tmp_path, extra):
+    p = _zip(tmp_path, [f"{U}.content", f"{U}.metadata", f"{U}/{P}.rm", extra])
+    f = Fake()
+    with pytest.raises(ValueError):
+        device.install_rmdoc(p, runner=f)
+    assert f.cmds == []
+
+
+def test_install_rejects_missing_metadata(tmp_path):
+    p = _zip(tmp_path, [f"{U}.content", f"{U}/{P}.rm"])
+    with pytest.raises(ValueError):
+        device.install_rmdoc(p, runner=Fake())
+
+
+def test_fetch_rejects_bad_uuid(tmp_path):
+    f = Fake()
+    with pytest.raises(ValueError):
+        device.fetch_thumbnails("x; reboot", tmp_path, runner=f)
+    assert f.cmds == []
