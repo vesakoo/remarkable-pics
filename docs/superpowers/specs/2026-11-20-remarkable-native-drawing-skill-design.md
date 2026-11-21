@@ -119,7 +119,7 @@ complex.** Interpretation (Claude's proposal):
 ## Decided "how"
 
 - **Language/library:** Python 3 + rmscene (Claude's call; the user handed over the how).
-- **Location:** this folder (`/Users/vesakankkunen/remarkable-pics`). Library in
+- **Location:** this repository's root. Library in
   `rmdraw/`, skill in `.claude/skills/remarkable-native/`, outputs in `out/`.
 - **Source icons:** AWS's official Architecture Icons asset package (SVG). AWS
   publishes it for customers drawing architecture diagrams.
