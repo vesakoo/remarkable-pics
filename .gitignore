@@ -1,0 +1,11 @@
+# secrets
+.remarkable
+# environments / caches
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+# generated and downloaded
+out/
+vendor/
+.DS_Store
