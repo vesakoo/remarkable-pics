@@ -5,7 +5,8 @@ description: Use when creating or converting anything into native, editable reMa
 
 # reMarkable native notebooks (rmdraw)
 
-This project (`/Users/vesakankkunen/remarkable-pics`) writes notebooks for the user's
+This project (the repository root, which holds `rmdraw/` and this `.claude/` folder; run
+every command from there) writes notebooks for the user's
 **reMarkable Paper Pro** that consist only of real pen strokes in the v6 `.rm` format.
 
 **"Native" means:** every line is a stroke the user could have drawn. They can erase,
@@ -34,7 +35,8 @@ lives in `out/drawings/<name>/`, `out/aws-icons/` and `out/calibration/` and is 
    - **Optional, needs SSH (developer mode):** `.venv/bin/rmdraw push out/fox.rmdoc --thumbs out/fox-thumbs`.
      The first stdout line is `installed <uuid>`, followed by any thumbnail paths.
      Later: `.venv/bin/rmdraw thumbs <uuid> -o out/fox-thumbs [--wait S]`.
-     This user has SSH. See "The device".
+     Check first: `ssh -o BatchMode=yes -o ConnectTimeout=5 root@10.11.99.1 true`.
+     If that fails, use drag and drop. See "The device".
 
 **SVG file:**
 `.venv/bin/rmdraw svg art.svg -o out/art.rmdoc [--box x,y,w,h] [--fill shader|marker|hatch|none] [--name "Title"] [--budget N]`.
@@ -233,7 +235,7 @@ Python alternative: `rmdraw.model` (`Stroke(points, pen, color, width_mm, rgba)`
 
 ## The device
 
-- **reMarkable Paper Pro**, software 3.29.1.0, developer mode on. **[device]**
+- **reMarkable Paper Pro.** The facts here were measured on software 3.29.1.0. **[device]**
 - **Two import routes:**
   1. **Desktop app drag and drop (default; no developer mode needed).** The user
      drags the `.rmdoc` into the reMarkable desktop app, and cloud sync puts it on the
@@ -242,8 +244,8 @@ Python alternative: `rmdraw.model` (`Stroke(points, pen, color, width_mm, rgba)`
   2. **SSH push (optional).** `rmdraw push`, thumbnail fetching and the reference-page
      protocol all need SSH, and SSH needs **developer mode**. **Enabling developer mode
      factory-resets the Paper Pro** (everything not synced is lost). Never ask a user
-     to enable it just for rmdraw. Use route 1 instead. This user already has
-     developer mode and SSH, so push is available here.
+     to enable it just for rmdraw. Use route 1 instead. Only use push when the
+     user already has SSH (the check above succeeds).
 - **SSH:** key auth as `root@10.11.99.1` over USB (`ssh -o BatchMode=yes root@10.11.99.1`).
 - Notebooks live in `/home/root/.local/share/remarkable/xochitl/` as `<uuid>.metadata`,
   `<uuid>.content`, `<uuid>/<page-uuid>.rm`, plus `<uuid>.local` and
@@ -254,7 +256,7 @@ Python alternative: `rmdraw.model` (`Stroke(points, pen, color, width_mm, rgba)`
 - **Never delete or modify the user's notebooks or any existing file on the tablet.**
   Reading is fine (ls, cat, scp *from* the device). To replace a pushed notebook, push
   a new build (new uuid) and let the user delete the old one on the tablet.
-- The USB web interface (http://10.11.99.1) is **off** on this tablet.
+- The USB web interface (http://10.11.99.1) may be off; rmdraw doesn't use it.
 - `--host` must be plain `user@host`. Anything else, e.g. a value starting with `-`, is
   rejected so ssh/scp can't read it as an option.
 - The file `.remarkable` in the project root holds a secret. **Never read, print, cat
