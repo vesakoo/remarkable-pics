@@ -1,10 +1,8 @@
-import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "tools"))
+from rmdraw.dump import dump
 
-from dump_rm import dump  # noqa: E402
+ROOT = Path(__file__).resolve().parent.parent
 
 REF = ROOT / "tests/fixtures/reference/8854cd39-dba3-48f7-8c5f-e6b9f0cea45f"
 PAGE1 = REF / "f4017db6-bda2-43bb-a742-cf6640428bd6.rm"

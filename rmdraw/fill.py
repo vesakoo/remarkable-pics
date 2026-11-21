@@ -137,7 +137,8 @@ def _band(area: BaseGeometry, spacing: float, inset: float, angle: float,
     return out
 
 
-def _render(shapes, method, spacing, category, drop_small, simplify, cache, inset="half") -> list[Stroke]:
+def _render(shapes, method, spacing, category, drop_small, simplify, cache, inset="half",
+            outlines=True) -> list[Stroke]:
     key = drop_small
     if key not in cache:
         cache[key] = [_shape_area(s, drop_small) if s.fill_rgb is not None else EMPTY
@@ -198,9 +199,13 @@ def _render(shapes, method, spacing, category, drop_small, simplify, cache, inse
                         fill_strokes.append(Stroke(pts, pen="marker", color=name, width_mm=width))
                     else:
                         fill_strokes.append(Stroke(pts, pen="fineliner", color=name, width_mm=width))
+            if not outlines:
+                continue
             edge = areas[i].boundary
             o_width = OUTLINE_WIDTH_MM
         else:
+            if not outlines:
+                continue
             rings = [r for r in s.outline if len(r) >= 2]
             if drop_small:
                 rings = [r for r in rings if not (r[0] == r[-1] and len(r) >= 4
@@ -230,6 +235,7 @@ def shapes_to_strokes(
     budget: int = 150,
     category: str | None = None,
     inset: str = "quarter",
+    outlines: bool = True,
 ) -> list[Stroke]:
     """Convert shapes (in paint order) to fill strokes followed by outline strokes.
 
@@ -237,6 +243,7 @@ def shapes_to_strokes(
     then simplify outlines at 0.2 mm; raise ValueError if still over.
     inset: "quarter" (default; band edge inset by width/4), "half" (width/2), or "outer" (only the
     exterior boundary is inset by width/2; holes keep their true edge).
+    outlines=False returns only the fill strokes (the caller draws its own outlines).
     """
     if inset not in ("half", "quarter", "outer"):
         raise ValueError(f"unknown inset {inset!r}")
@@ -250,7 +257,8 @@ def shapes_to_strokes(
     attempts += [(base * 2.0, True, False), (base * 2.0, True, True)]
     strokes: list[Stroke] = []
     for spacing, drop_small, simplify in attempts:
-        strokes = _render(shapes, method, spacing, category, drop_small, simplify, cache, inset)
+        strokes = _render(shapes, method, spacing, category, drop_small, simplify, cache, inset,
+                          outlines)
         if len(strokes) <= budget:
             return strokes
     raise ValueError(f"{len(strokes)} strokes exceed the budget of {budget} after simplification")

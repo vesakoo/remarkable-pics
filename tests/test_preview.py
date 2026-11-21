@@ -1,4 +1,3 @@
-import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -9,8 +8,7 @@ from rmdraw.model import Document, Page, Stroke
 from rmdraw.preview import render_rm_svg, render_rmdoc_svg
 from rmdraw.rmdoc import write_rmdoc
 
-sys.path.insert(0, str(Path(__file__).parent.parent / "tools"))
-from dump_rm import dump  # noqa: E402
+from rmdraw.dump import dump
 
 REF = Path(__file__).parent / (
     "fixtures/reference/8854cd39-dba3-48f7-8c5f-e6b9f0cea45f/"

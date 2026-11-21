@@ -1,0 +1,14 @@
+{
+  "name": "Smiley",
+  "pages": [[
+    {"type": "circle", "cx": 90, "cy": 110, "r": 60, "width_mm": 0.8,
+     "fill": {"color": "yellow"}},
+    {"type": "ellipse", "cx": 69, "cy": 90, "rx": 6, "ry": 9,
+     "fill": {"color": "black"}},
+    {"type": "ellipse", "cx": 111, "cy": 90, "rx": 6, "ry": 9,
+     "fill": {"color": "black"}},
+    {"type": "arc", "cx": 90, "cy": 112, "r": 36, "start_deg": 25, "end_deg": 155,
+     "width_mm": 1.2},
+    {"type": "text", "text": "Smile", "x": 90, "y": 190, "height": 8}
+  ]]
+}

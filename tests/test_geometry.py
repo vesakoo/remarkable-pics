@@ -1,7 +1,5 @@
-import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 
 from rmdraw.geometry import (
     COLOR_NAMES,
@@ -11,7 +9,7 @@ from rmdraw.geometry import (
     units_to_mm,
     width_to_device,
 )
-from dump_rm import dump  # noqa: E402
+from rmdraw.dump import dump
 
 REF = Path(__file__).parent / "fixtures/reference/8854cd39-dba3-48f7-8c5f-e6b9f0cea45f/f4017db6-bda2-43bb-a742-cf6640428bd6.rm"
 

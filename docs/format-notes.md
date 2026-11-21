@@ -111,5 +111,11 @@ This means the shader takes **arbitrary ARGB**. That's the best candidate for AW
 ## Open questions for calibration
 
 - Answered: pens ignore rgba; shader honours it (see the import test above).
-- Is the `.rmdoc` zip layout `<uuid>.content`, `<uuid>.metadata`, `<uuid>/<page>.rm` accepted by the desktop app and USB import, and which of the device's keys are required?
+- Is the `.rmdoc` zip layout `<uuid>.content`, `<uuid>.metadata`, `<uuid>/<page>.rm` accepted by the desktop app (drag and drop)? The USB web interface is off on this tablet, so the device has only been loaded over SSH (`rmdraw push`). Which of the device's `.content` keys are required?
 - Minimum speed, direction and pressure values for strokes to render with full width.
+
+## Where these facts are used
+
+- `.claude/skills/remarkable-native/SKILL.md` is the working summary for future sessions. Keep its tags in step with this file.
+- Tools: `rmdraw build|svg|preview|dump|push` (`rmdraw/cli.py`). `rmdraw dump <page.rm>` is the way to read device examples. `tools/dump_rm.py` is kept as a wrapper.
+- New device findings: follow the reference-page protocol in the skill, tag them here, and add a fixture plus a test.

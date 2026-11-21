@@ -1,0 +1,21 @@
+{
+  "name": "Tree",
+  "pages": [[
+    {"type": "polyline", "points": [[20, 200], [160, 200]], "color": "green", "width_mm": 0.8},
+    {"type": "polyline", "points": [[30, 200], [32, 195], [34, 200], [36, 196], [38, 200]],
+     "color": "green", "width_mm": 0.4},
+    {"type": "polyline", "points": [[140, 200], [142, 194], [144, 200], [146, 195], [148, 200]],
+     "color": "green", "width_mm": 0.4},
+    {"type": "polyline", "closed": true, "color": "red", "width_mm": 0.6,
+     "points": [[82, 200], [84, 130], [96, 130], [98, 200]],
+     "fill": {"color": "#8b5a2b"}},
+    {"type": "circle", "cx": 70, "cy": 105, "r": 24, "color": "green", "width_mm": 0.6,
+     "fill": {"color": "#4caf50"}},
+    {"type": "circle", "cx": 110, "cy": 105, "r": 24, "color": "green", "width_mm": 0.6,
+     "fill": {"color": "#4caf50"}},
+    {"type": "circle", "cx": 90, "cy": 80, "r": 28, "color": "green", "width_mm": 0.6,
+     "fill": {"color": "#4caf50"}},
+    {"type": "circle", "cx": 90, "cy": 115, "r": 22, "color": "green", "width_mm": 0.6,
+     "fill": {"color": "#4caf50"}}
+  ]]
+}
