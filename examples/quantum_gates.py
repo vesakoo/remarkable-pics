@@ -8,6 +8,7 @@ Everything is sized to the templates: gate tiles are GATE mm, qubit wires are RO
 so a lassoed gate pastes straight onto a wire and multi-qubit gates span the right rows.
 """
 import math
+import random
 import sys
 from pathlib import Path
 
@@ -127,12 +128,50 @@ def shift(strokes, dx, dy):
                    width_mm=s.width_mm) for s in strokes]
 
 
-def glyphs(s, x, y, h, font, color, width):
-    """Hershey text with its cap top at y; returns (strokes, advance)."""
+def _chaikin(pts, n=2):
+    for _ in range(n):
+        if len(pts) < 3:
+            return pts
+        out = [pts[0]]
+        for (ax, ay), (bx, by) in zip(pts, pts[1:]):
+            out += [(0.75 * ax + 0.25 * bx, 0.75 * ay + 0.25 * by),
+                    (0.25 * ax + 0.75 * bx, 0.25 * ay + 0.75 * by)]
+        out.append(pts[-1])
+        pts = out
+    return pts
+
+
+def _handify(polys, ch, i, k):
+    """Casual hand-lettering look: round corners, slant, small per-letter wobble (deterministic)."""
+    rnd = random.Random(f"{ch}|{i}")
+    rot = math.radians(rnd.uniform(-4.0, 4.0))
+    sc = rnd.uniform(0.95, 1.05)
+    dy = rnd.uniform(-0.9, 0.9)
+    out = []
+    for p in polys:
+        q = []
+        for px, py in _chaikin(p):
+            py2 = py - 0.0
+            px, py2 = px * math.cos(rot) - py2 * math.sin(rot), px * math.sin(rot) + py2 * math.cos(rot)
+            px, py2 = px * sc, py2 * sc + dy
+            px += (_BASE - py2) * 0.12        # slant
+            q.append((px, py2))
+        out.append(q)
+    return out
+
+
+HAND = [False]   # set HAND[0] = True to letter text by hand
+
+
+def glyphs(s, x, y, h, font, color, width, hand=None):
+    """Hershey text with its cap top at y; returns (strokes, advance).
+
+    hand=True gives a casual hand-lettered look (rounded, slanted, slightly uneven)."""
     f = _font(font)
     k = h / (_BASE - _CAP_TOP)
+    hand = HAND[0] if hand is None else hand
     out, cx = [], x
-    for ch in s:
+    for n, ch in enumerate(s):
         gs = list(f.glyphs_for_text(ch))
         if not gs:
             cx += 8 * k
@@ -144,6 +183,8 @@ def glyphs(s, x, y, h, font, color, width):
                 polys[-1].append(b)
             else:
                 polys.append([a, b])
+        if hand:
+            polys = _handify(polys, ch, n + int(cx * 7), k)
         for p in polys:
             out.append(Stroke([(cx + px * k, y + (py - _CAP_TOP) * k) for px, py in p],
                               color=color, width_mm=width))
@@ -167,10 +208,13 @@ def run(segs, x, y, h, color="black", width=0.3):
             st, w = glyphs(seg, cx, y, h, "futural", color, width)
         elif seg[0] == "greek":
             st, w = glyphs(seg[1], cx, y, h, "greek", color, width)
-        elif seg[0] == "sub":
-            st, w = glyphs(seg[1], cx, y + h * 0.55, h * 0.62, "futural", color, width * 0.85)
-        elif seg[0] == "sup":
-            st, w = glyphs(seg[1], cx, y - h * 0.3, h * 0.62, "futural", color, width * 0.85)
+        elif seg[0] in ("sub", "sup"):
+            yy = y + h * 0.55 if seg[0] == "sub" else y - h * 0.32
+            if isinstance(seg[1], str):
+                st, w = glyphs(seg[1], cx, yy, h * 0.62, "futural", color, width * 0.85)
+            else:
+                st, w = run(seg[1], cx, yy, h * 0.62, color, width * 0.85)
+            w += h * 0.08
         elif seg[0] == "dag":
             s = h * 0.62
             x0 = cx + h * 0.22
@@ -490,7 +534,8 @@ def page_circuit(n):
 
 
 def build() -> Document:
-    pages = [page_gates(), page_states(), page_bloch()] + [page_circuit(n) for n in range(1, 7)]
+    import quantum_matrices as qm
+    pages = [page_gates()] + qm.gate_pages() + [page_states()] + qm.state_pages() + [page_bloch()] + [page_circuit(n) for n in range(1, 7)]
     doc = from_dict({"name": NAME, "pages": [items for items, _ in pages]})
     for page, (_, strokes) in zip(doc.pages, pages):
         page.strokes.extend(strokes)
