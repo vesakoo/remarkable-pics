@@ -9,3 +9,6 @@ __pycache__/
 out/
 vendor/
 .DS_Store
+__pycache__/
+*.egg-info/
+.pytest_cache/
