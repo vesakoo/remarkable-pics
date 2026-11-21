@@ -72,3 +72,19 @@ def test_aspect_fit_and_hidden_skipped():
     shapes = svg_to_shapes(FX / "wide.svg", (0, 0, 20, 20))
     assert len(shapes) == 1
     assert bounds(shapes[0]) == pytest.approx((0, 5, 20, 15))
+
+
+def test_width_height_differ_from_viewbox():
+    (s,) = svg_to_shapes(FX / "sized_nested.svg", (0, 0, 48, 48))
+    assert bounds(s) == pytest.approx((10, 0, 30, 20))
+
+
+def test_broken_url_fill_is_none_or_fallback():
+    shapes = svg_to_shapes(FX / "badurl.svg", BOX)
+    assert len(shapes) == 1
+    assert shapes[0].fill_rgb == (0, 255, 0)
+
+
+def test_entity_rejected():
+    with pytest.raises(ValueError):
+        svg_to_shapes(FX / "entity.svg", BOX)

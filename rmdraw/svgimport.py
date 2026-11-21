@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import math
+import re
 import warnings
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
@@ -54,7 +55,9 @@ def _resolve_paint(grads, elem, attr: str):
     """Return RGB for fill/stroke, resolving url(#id) to the first gradient stop."""
     raw = elem.values.get(attr) if isinstance(elem.values, dict) else None
     if isinstance(raw, str) and raw.strip().startswith("url("):
-        ref = raw.strip()[4:].split(")")[0].strip("'\" ").lstrip("#")
+        head, _, tail = raw.strip()[4:].partition(")")
+        ref = head.strip("'\" ").lstrip("#")
+        tail = tail.strip()
         for _ in range(8):
             first, href = grads.get(ref, (None, None))
             if first is not None:
@@ -62,7 +65,12 @@ def _resolve_paint(grads, elem, attr: str):
             if not href:
                 break
             ref = href
-        return (0, 0, 0)
+        if tail and tail != "none":
+            try:
+                return _rgb(Color(tail))
+            except Exception:
+                return None
+        return None
     return _rgb(getattr(elem, attr))
 
 
@@ -125,13 +133,13 @@ def _hidden(e) -> bool:
 
 def svg_to_shapes(path: Path, box: tuple[float, float, float, float],
                   tolerance_mm: float = 0.15) -> list[FilledShape]:
+    text = Path(path).read_text(encoding="utf-8", errors="replace")
+    if "<!ENTITY" in text or re.search(r"<!DOCTYPE[^>\[]*\[", text, re.I):
+        raise ValueError("SVG with entity declarations or DOCTYPE internal subset rejected")
     svg = SVG.parse(str(path), reify=True)
     grads = _gradient_stops(ET.parse(str(path)).getroot())
-    vb = svg.viewbox
-    if vb is not None:
-        vx, vy, vw, vh = vb.x, vb.y, vb.width, vb.height
-    else:
-        vx, vy, vw, vh = 0.0, 0.0, float(svg.width), float(svg.height)
+    # reify already maps the viewBox into the width/height space
+    vx, vy, vw, vh = 0.0, 0.0, float(svg.width), float(svg.height)
     bx, by, bw, bh = box
     scale = min(bw / vw, bh / vh)
     ox = bx + (bw - vw * scale) / 2 - vx * scale
