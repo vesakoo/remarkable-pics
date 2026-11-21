@@ -286,3 +286,83 @@ def test_cli_thumbs_rejects_bad_args(tmp_path, monkeypatch, capsys):
     assert cli.main(["thumbs", "not-a-uuid", "-o", str(tmp_path)]) != 0
     assert cli.main(["thumbs", UID, "-o", str(tmp_path), "--host", "-oX=y"]) != 0
     assert "Traceback" not in capsys.readouterr().err
+
+
+def _text_doc(s):
+    return shapes_json.from_dict({"name": "t", "pages": [[
+        {"type": "text", "text": s, "x": 90, "y": 50, "height": 6}]]})
+
+
+def test_text_folds_diacritics():
+    a = [s.points for s in _text_doc("Hyvää päivää").pages[0].strokes]
+    b = [s.points for s in _text_doc("Hyvaa paivaa").pages[0].strokes]
+    assert a and a == b
+    assert ([s.points for s in _text_doc("Straße").pages[0].strokes]
+            == [s.points for s in _text_doc("Strasse").pages[0].strokes])
+
+
+def test_text_unsupported_char_warns_with_item(tmp_path, capsys):
+    with pytest.warns(UserWarning, match=r"pages\[0\]\[0\] \(text\): characters €"):
+        _text_doc("5 €")
+    p = _write_json(tmp_path, [{"type": "circle", "cx": 50, "cy": 50, "r": 5},
+                               {"type": "text", "text": "50 € ✓", "x": 90, "y": 50,
+                                "height": 6}])
+    assert cli.main(["build", str(p), "-o", str(tmp_path / "t.rmdoc")]) == 0
+    err = capsys.readouterr().err.strip().splitlines()
+    assert len(err) == 1 and "pages[0][1]" in err[0] and "€" in err[0] and "✓" in err[0]
+    assert "Traceback" not in err[0]
+
+
+def test_outline_false_draws_no_outline():
+    face = {"type": "rect", "x": 20, "y": 20, "w": 100, "h": 100, "color": "black",
+            "fill": {"color": "#ff8000"}}
+    patch = {"type": "circle", "cx": 70, "cy": 70, "r": 20, "outline": False,
+             "fill": {"color": "white"}}
+    strokes = shapes_json.from_dict({"name": "t", "pages": [[face, patch]]}).pages[0].strokes
+    pens = [s for s in strokes if s.pen != "shader"]
+    assert len(pens) == 1  # only the rect's outline
+    assert all(abs(x - 70) ** 2 + abs(y - 70) ** 2 > 19.5 ** 2
+               for s in strokes for x, y in s.points[1:-1] or [])
+    for bad, msg in (({**patch, "outline": "no"}, "outline"),
+                     ({"type": "circle", "cx": 50, "cy": 50, "r": 5, "outline": False},
+                      "without a fill"),
+                     ({"type": "text", "text": "a", "x": 50, "y": 50, "height": 5,
+                       "outline": False}, "outline")):
+        with pytest.raises(ValueError, match=r"pages\[0\]\[0\].*" + msg):
+            shapes_json.from_dict({"name": "t", "pages": [[bad]]})
+
+
+def test_svg_item_hides_earlier_fill(tmp_path):
+    from shapely.geometry import LineString, box
+    svg = tmp_path / "white.svg"
+    svg.write_text('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10" width="10" '
+                   'height="10"><rect width="10" height="10" fill="#ffffff"/></svg>')
+    blue = {"type": "rect", "x": 20, "y": 20, "w": 100, "h": 100, "fill": {"color": "blue"}}
+    item = {"type": "svg", "path": svg.name, "box": [50, 50, 20, 20]}
+    p = _write_json(tmp_path, [blue, item])
+    strokes = shapes_json.load(p).pages[0].strokes
+    shader = [s for s in strokes if s.pen == "shader"]
+    assert shader
+    gap = box(51, 51, 69, 69)
+    assert all(not LineString(s.points).intersects(gap) for s in shader if len(s.points) > 1)
+    # the white rect's outline (black, the colour under nothing) is drawn on top
+    assert any(s.pen == "fineliner" and min(x for x, _ in s.points) >= 49.9 for s in strokes)
+
+
+def test_closed_must_be_bool(tmp_path):
+    p = _write_json(tmp_path, [{"type": "polyline", "points": [[10, 10], [20, 10], [20, 20]],
+                                "closed": "false"}])
+    with pytest.raises(ValueError, match=r"pages\[0\]\[0\].*'closed'.*bool"):
+        shapes_json.load(p)
+
+
+def test_cli_push_wait_without_thumbs_notes(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(device, "install_rmdoc", lambda *a, **k: UID)
+    monkeypatch.setattr(device, "fetch_thumbnails",
+                        lambda *a, **k: (_ for _ in ()).throw(AssertionError("called")))
+    rmdoc = tmp_path / "s.rmdoc"
+    rmdoc.write_bytes(b"x")
+    assert cli.main(["push", str(rmdoc), "--wait", "30"]) == 0
+    captured = capsys.readouterr()
+    assert captured.out.splitlines() == [f"installed {UID}"]
+    assert "--wait has no effect without --thumbs" in captured.err

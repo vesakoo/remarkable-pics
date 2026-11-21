@@ -4,11 +4,9 @@
 .venv/
 __pycache__/
 *.pyc
+*.egg-info/
 .pytest_cache/
 # generated and downloaded
 out/
 vendor/
 .DS_Store
-__pycache__/
-*.egg-info/
-.pytest_cache/

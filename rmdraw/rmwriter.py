@@ -6,7 +6,7 @@ from typing import BinaryIO
 import rmdraw  # noqa: F401  (installs the extended PenColor)
 from rmscene import CrdtId, write_blocks
 from rmscene.crdt_sequence import CrdtSequenceItem
-from rmscene.scene_items import Group, Line, Pen, PenColor, Point
+from rmscene.scene_items import Group, Line, PenColor, Point
 from rmscene.scene_stream import (
     AuthorIdsBlock,
     Block,

@@ -1,5 +1,6 @@
 """Single-stroke (Hershey futural) text as pen strokes."""
 
+import unicodedata
 import warnings
 
 from HersheyFonts import HersheyFonts
@@ -8,7 +9,7 @@ from rmdraw.model import Stroke
 
 _font = HersheyFonts()
 _font.load_default_font("futural")
-_MAP = {"–": "-", "—": "-", "’": "'"}
+_MAP = {"–": "-", "—": "-", "’": "'", "ß": "ss"}
 _CAP_TOP, _BASE = -12.0, 9.0  # futural cap line / baseline (y down)
 _CAP = _BASE - _CAP_TOP
 _EPS = 1e-6
@@ -44,17 +45,37 @@ def _layout(line):
     return out, x
 
 
+def _fold(ch):
+    """The font's spelling of ch: itself, a mapped/accent-stripped form, or None."""
+    ch = _MAP.get(ch, ch)
+    if all(_glyph(c) is not None for c in ch):
+        return ch
+    base = "".join(c for c in unicodedata.normalize("NFKD", ch) if not unicodedata.combining(c))
+    if base and all(_glyph(c) is not None for c in base):
+        return base
+    return None
+
+
+def unsupported_chars(s):
+    """Characters of s that the stroke font cannot draw even after folding accents."""
+    out = []
+    for ch in s:
+        if _fold(ch) is None and ch not in out:
+            out.append(ch)
+    return out
+
+
 def _normalize(s):
     warned: set[str] = set()
     chars = []
     for ch in s:
-        ch = _MAP.get(ch, ch)
-        if _glyph(ch) is None:
+        folded = _fold(ch)
+        if folded is None:
             if ch not in warned:
                 warned.add(ch)
                 warnings.warn(f"character {ch!r} missing from stroke font; using space", stacklevel=3)
-            ch = " "
-        chars.append(ch)
+            folded = " "
+        chars.append(folded)
     return "".join(chars)
 
 

@@ -84,6 +84,13 @@ def _shape_area(shape: FilledShape, drop_small: bool) -> BaseGeometry:
     return _polys_only(shapely.make_valid(shapely.union_all(regions)))
 
 
+def filled_area(shapes: list[FilledShape]) -> BaseGeometry:
+    """Union of the areas of all filled shapes (white ones included): what they hide."""
+    areas = [_shape_area(s, False) for s in shapes if s.fill_rgb is not None]
+    areas = [a for a in areas if not a.is_empty]
+    return shapely.union_all(areas) if areas else EMPTY
+
+
 def _lines(g: BaseGeometry) -> list[LineString]:
     if g.is_empty:
         return []

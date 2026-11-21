@@ -125,8 +125,11 @@ def _no_thumbs(uuid: str) -> str:
 def cmd_push(a) -> int:
     uuid = device.install_rmdoc(_need_file(Path(a.rmdoc)), host=a.host)
     print(f"installed {uuid}", flush=True)
+    if a.wait is not None and not a.thumbs:
+        print("rmdraw: note: --wait has no effect without --thumbs DIR", file=sys.stderr)
     if a.thumbs:
-        pngs = device.fetch_thumbnails(uuid, Path(a.thumbs), host=a.host, wait_s=a.wait)
+        wait = a.wait if a.wait is not None else 10.0
+        pngs = device.fetch_thumbnails(uuid, Path(a.thumbs), host=a.host, wait_s=wait)
         if not pngs:
             print(f"rmdraw: warning: {_no_thumbs(uuid)}", file=sys.stderr)
         for png in pngs:
@@ -177,8 +180,8 @@ def _parser() -> argparse.ArgumentParser:
     u = sub.add_parser("push", help="add an .rmdoc to the tablet over SSH (never deletes)")
     u.add_argument("rmdoc")
     u.add_argument("--thumbs", metavar="DIR", help="fetch the device thumbnails into DIR")
-    u.add_argument("--wait", type=_wait, default=10.0, metavar="S",
-                   help="seconds to wait for thumbnails (default 10)")
+    u.add_argument("--wait", type=_wait, default=None, metavar="S",
+                   help="with --thumbs: seconds to wait for thumbnails (default 10)")
     u.add_argument("--host", type=_host, default="root@10.11.99.1")
     u.set_defaults(func=cmd_push)
 

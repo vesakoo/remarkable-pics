@@ -32,12 +32,12 @@ from pathlib import Path
 import shapely
 from shapely.geometry import LineString, Point, Polygon
 
-from .fill import DEFAULT_SPACING, shapes_to_strokes
+from .fill import DEFAULT_SPACING, filled_area, shapes_to_strokes
 from .geometry import COLOR_NAMES, PAGE_H_MM, PAGE_W_MM, PEN_NAMES
 from .model import Document, Page, Stroke
 from .palette import FILL_ALPHA, PALETTE_RGB
 from .svgimport import FilledShape, svg_to_shapes
-from .text import text_strokes
+from .text import text_strokes, unsupported_chars
 
 TOLERANCE_MM = 0.15
 DEFAULT_WIDTH_MM = 0.4
@@ -46,7 +46,7 @@ PAGE_WARN = 3000
 FILL_RGB = {**PALETTE_RGB, "white": (255, 255, 255)}
 FILL_METHODS = tuple(DEFAULT_SPACING)
 _HEX = re.compile(r"#[0-9a-fA-F]{6}")
-_COMMON = {"type", "pen", "color", "width_mm", "fill"}
+_COMMON = {"type", "pen", "color", "width_mm", "fill", "outline"}
 _FIELDS = {
     "polyline": ({"points"}, {"closed"}),
     "circle": ({"cx", "cy", "r"}, set()),
@@ -126,6 +126,12 @@ class _Item:
         if nonneg and v < 0:
             self.fail(f"field '{key}' must be >= 0, got {v!r}")
         return float(v)
+
+    def flag(self, key: str, default: bool) -> bool:
+        v = self.d.get(key, default)
+        if not isinstance(v, bool):
+            self.fail(f"field '{key}' must be true or false (a JSON bool), got {v!r}")
+        return v
 
     def points(self, key: str, min_n: int) -> list[Pt]:
         v = self.d.get(key)
@@ -211,7 +217,7 @@ def _geometry(it: _Item, t: str) -> tuple[list[Pt], bool]:
     """Flattened outline and whether it is closed."""
     if t == "polyline":
         pts = it.points("points", 2)
-        closed = bool(it.d.get("closed", False))
+        closed = it.flag("closed", False)
         if closed and pts[0] != pts[-1]:
             pts.append(pts[0])
         return pts, closed
@@ -220,7 +226,7 @@ def _geometry(it: _Item, t: str) -> tuple[list[Pt], bool]:
         if (len(pts) - 1) % 3:
             it.fail("field 'points' must hold 1 + 3k points (p0, c1, c2, p3, then c, c, p ...)")
         pts = flatten_bezier(pts)
-        closed = bool(it.d.get("closed", False))
+        closed = it.flag("closed", False)
         if closed and pts[0] != pts[-1]:
             pts.append(pts[0])
         return pts, closed
@@ -262,8 +268,12 @@ def _text(it: _Item, style: dict) -> list[Stroke]:
     if align not in ("center", "left"):
         it.fail(f"field 'align' must be 'center' or 'left', got {align!r}")
     mw = it.num("max_width", positive=True) if "max_width" in it.d else None
+    missing = unsupported_chars(s)
+    if missing:
+        warnings.warn(f"{it.where}: characters {' '.join(missing)} are not in the stroke font "
+                      "and are drawn as spaces", UserWarning, stacklevel=2)
     with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
+        warnings.simplefilter("ignore")  # reported once above, per item
         strokes = text_strokes(s, it.num("x"), it.num("y"), it.num("height", positive=True),
                                max_width_mm=mw, align=align, color=style["color"])
     for st in strokes:
@@ -280,7 +290,11 @@ def svg_strokes(path: Path, box: tuple[float, float, float, float], method: str 
 
     The whole SVG counts as one object: more than `budget` strokes raises ValueError.
     """
-    shapes = svg_to_shapes(Path(path), box, tolerance_mm=TOLERANCE_MM)
+    return _svg_render(svg_to_shapes(Path(path), box, tolerance_mm=TOLERANCE_MM), method,
+                       spacing_mm, budget)
+
+
+def _svg_render(shapes, method, spacing_mm, budget) -> list[Stroke]:
     if method == "none":
         shapes = [FilledShape(s.outline, None, s.stroke_rgb or s.fill_rgb, s.fill_rule,
                               s.stroke_width_mm) for s in shapes
@@ -289,7 +303,8 @@ def svg_strokes(path: Path, box: tuple[float, float, float, float], method: str 
     return shapes_to_strokes(shapes, method=method, spacing_mm=spacing_mm, budget=budget)
 
 
-def _svg(it: _Item, base: Path) -> list[Stroke]:
+def _svg(it: _Item, base: Path):
+    """(strokes, area the SVG's filled shapes hide or None)."""
     p = it.d.get("path")
     if not isinstance(p, str) or not p:
         it.fail("field 'path' must be a file path string")
@@ -305,9 +320,12 @@ def _svg(it: _Item, base: Path) -> list[Stroke]:
     _check_on_page(it, [(x, y), (x + w, y + h)])
     spec = _fill_spec(it, allow_none=True) or {"method": "shader", "spacing": None}
     try:
-        return svg_strokes(path, (x, y, w, h), spec["method"], spec["spacing"])
+        shapes = svg_to_shapes(path, (x, y, w, h), tolerance_mm=TOLERANCE_MM)
+        strokes = _svg_render(shapes, spec["method"], spec["spacing"], ITEM_BUDGET)
     except ValueError as e:
         it.fail(str(e))
+    cover = filled_area(shapes) if spec["method"] != "none" else None
+    return strokes, (cover if cover is not None and not cover.is_empty else None)
 
 
 def _polygon(ring: list[Pt]):
@@ -352,7 +370,7 @@ def _clip(stroke: Stroke, cover) -> list[Stroke]:
 def _page(items, p: int, base: Path) -> Page:
     if not isinstance(items, list):
         raise ValueError(f"pages[{p}]: a page must be a list of items")
-    built = []  # (strokes, (area, fill) or None) per item
+    built = []  # (strokes, (area, fill) or None, area it hides or None) per item
     for i, d in enumerate(items):
         where = f"pages[{p}][{i}]"
         if not isinstance(d, dict):
@@ -366,9 +384,12 @@ def _page(items, p: int, base: Path) -> Page:
             if k not in _COMMON | required | optional:
                 it.fail(f"unknown field '{k}' (allowed: "
                         f"{', '.join(sorted(_COMMON | required | optional))})")
+        if t in ("svg", "text") and "outline" in d:
+            it.fail(f"field 'outline' is not allowed on {t}")
+        draw_outline = it.flag("outline", True)
         if t == "svg":
-            strokes = _svg(it, base)
-            built.append((strokes, None))
+            strokes, hides = _svg(it, base)
+            built.append((strokes, None, hides))
             continue
         style = _style(it)
         if t == "text":
@@ -377,7 +398,7 @@ def _page(items, p: int, base: Path) -> Page:
             strokes = _text(it, style)
             for st in strokes:
                 _check_on_page(it, st.points)
-            built.append((strokes, None))
+            built.append((strokes, None, None))
             continue
         pts, closed = _geometry(it, t)
         _check_on_page(it, pts)
@@ -390,14 +411,16 @@ def _page(items, p: int, base: Path) -> Page:
             area = _polygon(pts)
             if area is None:
                 it.fail("field 'fill': the shape encloses no area")
-        outline = Stroke(pts, style["pen"], style["color"], style["width_mm"], style["rgba"])
-        built.append(([outline], (area, fill) if fill else None))
+        if not draw_outline and fill is None:
+            it.fail("field 'outline': false without a fill draws nothing")
+        outline = [Stroke(pts, style["pen"], style["color"], style["width_mm"], style["rgba"])]
+        built.append((outline if draw_outline else [], (area, fill) if fill else None, area))
 
     # paint order: each filled item hides what was drawn before it
     strokes: list[Stroke] = []
     cover = None
     for i in range(len(built) - 1, -1, -1):
-        strokes_i, filled = built[i]
+        strokes_i, filled, hides = built[i]
         mine: list[Stroke] = []
         for st in strokes_i:
             mine += _clip(st, cover)
@@ -417,8 +440,8 @@ def _page(items, p: int, base: Path) -> Page:
                         f"{ITEM_BUDGET} strokes (the per-object budget); increase "
                         "fill.spacing_mm, make the shape smaller or split it") from None
         strokes[:0] = mine
-        if filled is not None:
-            cover = filled[0] if cover is None else cover.union(filled[0])
+        if hides is not None:
+            cover = hides if cover is None else cover.union(hides)
     if len(strokes) > PAGE_WARN:
         warnings.warn(f"pages[{p}] has {len(strokes)} strokes; above ~{PAGE_WARN} the "
                       "tablet gets sluggish", UserWarning, stacklevel=3)

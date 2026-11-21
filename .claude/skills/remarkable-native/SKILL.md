@@ -25,8 +25,9 @@ Tooling: Python package `rmdraw/` plus the `rmdraw` CLI. Always use the project 
 3. `.venv/bin/rmdraw preview out/fox.rmdoc -o out/fox.svg` (add `--page N` for page N, from 1)
 4. Render a PNG and **look at it** (see Verify). Fix the JSON and repeat until it reads well.
 5. Getting it onto the tablet (only when the user wants it there):
-   - **Default, works for everyone:** give the user `out/fox.rmdoc` to drag into the
-     reMarkable desktop app, which syncs it to the tablet.
+   - **Default (no developer mode needed):** give the user `out/fox.rmdoc` to drag into
+     the reMarkable desktop app, which syncs it to the tablet. **[unverified]** for our
+     files: confirm with the user that the import worked.
    - **Optional, needs SSH (developer mode):** `.venv/bin/rmdraw push out/fox.rmdoc --thumbs out/fox-thumbs`.
      The first stdout line is `installed <uuid>`, followed by any thumbnail paths.
      Later: `.venv/bin/rmdraw thumbs <uuid> -o out/fox-thumbs [--wait S]`.
@@ -66,25 +67,30 @@ device units. Item types:
 | `rect` | `x, y, w, h, rx?` | `rx` = corner radius |
 | `arc` | `cx, cy, r, start_deg, end_deg` | **clockwise from 3 o'clock** (y is down): 90 = 6 o'clock, 270 = 12 o'clock; needs start < end ≤ start + 360. A smile is 25 → 155 |
 | `bezier` | `points: [p0, c1, c2, p3, c, c, p, ...]`, `closed?` | cubic chain, 1 + 3k points |
-| `text` | `text, x, y, height, align?, max_width?` | single-stroke Hershey font. `x` is the centre (`align: "center"`, default) or the left edge (`"left"`). `y` is the **cap top**; `height` is the cap height. `max_width` wraps to two lines, then shrinks |
+| `text` | `text, x, y, height, align?, max_width?` | single-stroke Hershey font, **ASCII only**: accents are dropped (ä→a, é→e, ß→ss), and other symbols (€, ✓, emoji) become spaces with a warning naming the item. `x` is the centre (`align: "center"`, default) or the left edge (`"left"`). `y` is the **cap top**; `height` is the cap height. `max_width` wraps to two lines, then shrinks |
 | `svg` | `path, box: [x,y,w,h]` | path relative to the JSON file; `fill: {method?: shader\|marker\|hatch\|none, spacing_mm?}` |
 
 Common optional fields: `pen` (default `fineliner`), `color` (default `black`),
-`width_mm` (default 0.4), `fill: {color, method?, spacing_mm?}`. `fill.color` is a
+`width_mm` (default 0.4), `outline` (default `true`; `false` draws no outline stroke, only
+the fill or the white gap; needs a fill), `fill: {color, method?, spacing_mm?}`. `fill.color` is a
 palette name or `"#rrggbb"`; `method` defaults to `shader`. Only closed shapes take a
 fill (circle, ellipse, rect, or polyline/bezier with `closed: true`). Curves are
-flattened to 0.15 mm.
+flattened to 0.15 mm. `closed` and `outline` must be JSON booleans (`true`/`false`, not strings).
 
 Errors name the item, e.g. `pages[0][3] (circle): field 'r' must be > 0`. Unknown
 types, fields, pens and colours are rejected, and so is any point off the page.
 
 **Paint order = list order.** A filled item **hides** everything listed before it
-where they overlap (fills and lines are clipped). So list the background first and the
+where they overlap (fills and lines are clipped). That includes an `svg` item: the area
+of its filled shapes (white ones too) hides earlier items, unless its fill method is
+`none`. Text and unfilled lines hide nothing. So list the background first and the
 details last. A `white` fill draws nothing, but it still hides what lies below: that's
 how to cut a gap (e.g. the white of an eye) into a coloured area. **Its outline is
-still drawn** in the item's `color` (default black). For a seamless white patch inside a
-coloured area (e.g. a fox's muzzle), set `color` to the surrounding fill's nearest pen
-colour, or keep the line as a deliberate contour.
+still drawn** in the item's `color` (default black), unless you set `"outline": false`.
+- **Seamless white patch** (e.g. a fox's muzzle inside orange fur): `"fill": {"color":
+  "white"}, "outline": false`. Don't try to match the outline to the fill: pen colours
+  are a fixed palette (the nearest pen colour to orange is yellow), so it leaves a ring.
+- **Deliberate edge:** keep the outline and pick its pen `color`.
 
 ## Composing a drawing from a description
 
@@ -102,8 +108,10 @@ it's the same enum as `hl_pink` (5). As a pen (non-highlighter) colour it is
 **[unverified]**, so prefer `red` or `magenta` for pens.
 
 **Fill colours** (`fill.color`): any `"#rrggbb"` (the shader honours exact RGB, so
-brown, orange, skin tones and pastels all work), or the names
-`black gray blue red green yellow cyan magenta white`.
+brown, orange, skin tones and pastels work), or the names
+`black gray blue red green yellow cyan magenta white`. **Near-white counts as white:** a
+fill whose R, G and B are **all ≥ 230** draws nothing (it's a gap, like `white`). Pastels
+need at least one channel below 230 (e.g. `#ffd8a8`, not `#fff0e0`).
 
 **Pens, by job:**
 - `fineliner`: outlines, details and text. Uniform width. Default 0.4 mm; 0.6–1.2 mm
@@ -166,7 +174,7 @@ The face is first, so the eyes (filled, listed later) cut their area out of its 
 fill. The smile arc runs 25° → 155° clockwise from 3 o'clock, i.e. through 6 o'clock:
 a U shape. Result: about 170 strokes.
 
-Python alternative: `rmdraw.model` (`Stroke(points_mm, pen, color, width_mm, rgba)`,
+Python alternative: `rmdraw.model` (`Stroke(points, pen, color, width_mm, rgba)` with points in mm,
 `Page`, `Document`), `rmdraw.rmdoc.write_rmdoc(doc, path)`, `rmdraw.text.text_strokes`,
 `rmdraw.fill.shapes_to_strokes`, `rmdraw.shapes_json.from_dict(data)`.
 
@@ -194,6 +202,10 @@ Python alternative: `rmdraw.model` (`Stroke(points_mm, pen, color, width_mm, rgb
      each saved path, or exits non-zero with a one-line "no thumbnail yet" message.
    - Python: `rmdraw.device.fetch_thumbnails(doc_uuid, out_dir, host="root@10.11.99.1",
      wait_s=10) -> list[Path]`, which returns `[]` if none appeared within `wait_s`.
+   - The PNGs are named `<page-uuid>.png`, saved directly in the DIR. The page order is
+     the `cPages.pages` list in the notebook's `<uuid>.content` (inside the `.rmdoc` zip),
+     so match the file names against that list to know which page each one is.
+   - `push --wait` only matters with `--thumbs`; on its own it prints a note.
    - **Thumbnail timing [device]:** sometimes a thumbnail appears within about 10 s,
      sometimes it takes over 40 s, and sometimes only after the notebook is opened on
      the tablet. Often only page 1 gets one. If none comes, ask the user to open the
@@ -290,9 +302,11 @@ skill or format-notes update. Keep the facts tagged.
   sample writer leaves it out. `rmdraw.rmwriter` writes it, so don't hand-roll scenes.
 - **x is centred** in device units (0 = page middle). In rmdraw you work in mm from
   the top-left, and the conversion is done for you. Watch it when reading dumps.
-- **White is a gap, not paint.** White fills draw nothing (they hide what's below), but
-  the item's outline is still drawn in its `color` (default black). A white pen line on
-  colour is just a white stroke. Use white fills to cut holes.
+- **White is a gap, not paint.** White fills (and near-white: all channels ≥ 230) draw
+  nothing; they hide what's below. The outline is still drawn in `color` unless
+  `"outline": false`, which is how to get a seamless white patch. A white pen line on
+  colour is just a white stroke.
+- **Text is ASCII.** Accents are folded (ä→a), and other symbols become spaces with a warning.
 - **Descenders:** text `y` is the cap top. Letters like g, j, p, q, y reach about a third of
   `height` below the baseline. Leave room below text and above the page edge.
 - **150-stroke budget per object, enforced** (the outline counts). Dense fills, hatch

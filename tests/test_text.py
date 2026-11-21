@@ -26,9 +26,15 @@ def test_wraps_long_title():
 
 def test_missing_glyph_becomes_space():
     with pytest.warns(UserWarning) as rec:
-        ss = text_strokes("Café – S3", 50, 10, 2.5)
+        ss = text_strokes("Café € – S3", 50, 10, 2.5)
     assert ss
-    assert len(rec) == 1 and "é" in str(rec[0].message)
+    assert len(rec) == 1 and "€" in str(rec[0].message)
+
+
+def test_accents_fold_to_base_letters():
+    def pts(s):
+        return [st.points for st in text_strokes(s, 50, 10, 2.5)]
+    assert pts("Café – S3") == pts("Cafe – S3")
 
 
 def test_strokes_are_joined():

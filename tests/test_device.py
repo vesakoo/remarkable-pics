@@ -136,3 +136,45 @@ def test_device_rejects_bad_host(tmp_path, host):
         device.fetch_thumbnails("0b1c2d3e-0000-4000-8000-000000000000", tmp_path, host=host,
                                 runner=runner)
     assert device.check_host("root@10.11.99.1") == "root@10.11.99.1"
+
+
+def test_install_copies_pages_first_metadata_last(tmp_path):
+    p, uuid = make(tmp_path)
+    f = Fake()
+    device.install_rmdoc(p, runner=f)
+    sources = [Path(c[-2]).name for c in f.cmds if c[0] == "scp"]
+    assert sources == [uuid, f"{uuid}.content", f"{uuid}.metadata"]
+
+
+def test_install_partial_failure_is_reported(tmp_path):
+    import subprocess
+    p, uuid = make(tmp_path)
+    f = Fake()
+
+    def runner(cmd, **kw):
+        if cmd[0] == "scp" and cmd[-2].endswith(".content"):
+            f.cmds.append(list(cmd))
+            raise subprocess.CalledProcessError(1, cmd, stderr="scp: disk full")
+        return f(cmd, **kw)
+
+    with pytest.raises(RuntimeError, match=rf"partial install of {uuid}") as e:
+        device.install_rmdoc(p, runner=runner)
+    assert f"{uuid}.content" in str(e.value) and "disk full" in str(e.value)
+    assert f"{uuid}.metadata" not in str(e.value)
+    assert not any("restart" in " ".join(c) for c in f.cmds)
+
+
+def test_fetch_thumbnails_removes_local_subfolder(tmp_path):
+    uid = "b9e10bde-1351-43f5-a32b-1f945c933961"
+    f = Fake()
+
+    def runner(cmd, **kw):
+        if cmd[0] == "scp":  # simulate scp -r creating <out>/<uuid>.thumbnails/<page>.png
+            sub = Path(cmd[-1]) / f"{uid}.thumbnails"
+            sub.mkdir(parents=True)
+            (sub / "p1.png").write_bytes(b"png")
+        return f(cmd, **kw)
+
+    out = device.fetch_thumbnails(uid, tmp_path / "o", runner=runner, sleep=lambda s: None)
+    assert out == [tmp_path / "o" / "p1.png"]
+    assert not (tmp_path / "o" / f"{uid}.thumbnails").exists()

@@ -62,11 +62,24 @@ def install_rmdoc(path: Path, host: str = "root@10.11.99.1", runner=subprocess.r
         if not (r.returncode in (1, 2) and not out and "No such file" in err):
             raise RuntimeError(
                 f"existence check failed (rc={r.returncode}): {err.strip() or out}")
-        for name in (f"{uuid}.content", f"{uuid}.metadata", uuid):
-            runner(SCP + [str(Path(tmp) / name), f"{host}:{XOCHITL}/"],
-                   check=True, capture_output=True, text=True)
-        runner(SSH + [host, "systemctl restart xochitl"], check=True,
-               capture_output=True, text=True)
+        # pages first, metadata last: xochitl only lists a notebook once .metadata exists
+        order = (uuid, f"{uuid}.content", f"{uuid}.metadata")
+        for k, name in enumerate(order):
+            try:
+                runner(SCP + [str(Path(tmp) / name), f"{host}:{XOCHITL}/"],
+                       check=True, capture_output=True, text=True)
+            except subprocess.CalledProcessError as e:
+                maybe = ", ".join(f"{XOCHITL}/{n}" for n in order[:k + 1])
+                detail = (e.stderr or "").strip() if isinstance(e.stderr, str) else ""
+                raise RuntimeError(f"partial install of {uuid}: copying {name} failed"
+                                   f"{': ' + detail if detail else ''}; these may exist on the "
+                                   f"device: {maybe}") from None
+        try:
+            runner(SSH + [host, "systemctl restart xochitl"], check=True,
+                   capture_output=True, text=True)
+        except subprocess.CalledProcessError:
+            raise RuntimeError(f"installed {uuid}, but 'systemctl restart xochitl' failed; "
+                               "restart the tablet UI to see it") from None
     return uuid
 
 
@@ -93,4 +106,8 @@ def fetch_thumbnails(doc_uuid: str, out_dir: Path, host: str = "root@10.11.99.1"
         dest = out_dir / png.name
         png.replace(dest)
         result.append(dest)
+    try:
+        sub.rmdir()  # local scp leftover only; never touches the device
+    except OSError:
+        pass
     return result
