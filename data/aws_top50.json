@@ -36,7 +36,7 @@
   {"title": "Amazon Athena", "category": "analytics", "match": "Arch_Amazon-Athena_48"},
   {"title": "AWS Glue", "category": "analytics", "match": "Arch_AWS-Glue_48"},
   {"title": "Amazon EMR", "category": "analytics", "match": "Arch_Amazon-EMR_48"},
-  {"title": "Amazon OpenSearch Service", "category": "analytics", "match": "OpenSearch-Service_48"},
+  {"title": "Amazon OpenSearch", "category": "analytics", "match": "OpenSearch-Service_48"},
   {"title": "AWS IAM", "category": "security", "match": "Identity-and-Access-Management_48"},
   {"title": "Amazon Cognito", "category": "security", "match": "Arch_Amazon-Cognito_48"},
   {"title": "AWS KMS", "category": "security", "match": "Key-Management-Service_48"},

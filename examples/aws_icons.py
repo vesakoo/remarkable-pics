@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "out"
 DATA = ROOT / "data" / "aws_top50.json"
 VENDOR = ROOT / "vendor" / "aws-icons"
-NAME = "AWS Icons – Top 50"
+NAME = "AWS Icons – Top 50 (v2)"
 TITLE_H = 2.5
 BUDGET = 150
 TOLERANCES = (0.15, 0.25, 0.4, 0.6)
@@ -34,12 +34,16 @@ def find_icon(match: str) -> Path:
     return hits[0]
 
 
-def icon_strokes(path: Path, box, category):
+def icon_strokes(path: Path, box):
     """Strokes for one icon; raise the curve tolerance if it is over budget."""
     for tol in TOLERANCES:
         shapes = svg_to_shapes(path, box, tolerance_mm=tol)
         try:
-            return shapes_to_strokes(shapes, category=category, budget=BUDGET), tol
+            # category=None on purpose: the 2026 AWS icon colours differ from the guessed
+            # AWS_CATEGORY_COLORS (Database fills are magenta-purple, Networking purple), so
+            # forcing the category pen gave outlines that clash with the fill. Without a
+            # category each outline uses the palette colour nearest to its actual fill.
+            return shapes_to_strokes(shapes, category=None, budget=BUDGET), tol
         except ValueError:
             continue
     raise ValueError(f"{path.name} exceeds {BUDGET} strokes at every tolerance")
@@ -64,7 +68,7 @@ def build():
                 st += text_strokes(c.title, x, y, HEADING_H_MM, align="left")
                 continue
             e = by_title[c.title]
-            icon, tol = icon_strokes(find_icon(e["match"]), c.icon_box, e["category"])
+            icon, tol = icon_strokes(find_icon(e["match"]), c.icon_box)
             tx, ty, tw, _ = c.title_box
             title = text_strokes(c.title, tx + tw / 2, ty, TITLE_H, max_width_mm=tw)
             if not _inside(title, c.title_box):
