@@ -7,6 +7,11 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 # generated and downloaded
-out/
+# out/: loose files are scratch; the organised gallery folders are committed
+out/*
+!out/README.md
+!out/drawings/
+!out/aws-icons/
+!out/calibration/
 vendor/
 .DS_Store

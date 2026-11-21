@@ -15,7 +15,9 @@ the page, it is wrong even if it "works".
 
 Tooling: Python package `rmdraw/` plus the `rmdraw` CLI. Always use the project venv:
 `.venv/bin/rmdraw ...` and `.venv/bin/python` / `.venv/bin/pytest`. Outputs go in
-`out/` (git-ignored).
+`out/`: loose files directly in `out/` are git-ignored scratch. The committed gallery
+lives in `out/drawings/<name>/`, `out/aws-icons/` and `out/calibration/` and is rebuilt by
+`.venv/bin/python tools/build_gallery.py` (see "Publishing to the gallery").
 
 ## Quick recipes
 
@@ -50,6 +52,11 @@ embed the raster.
 
 **Inspect a page:** `.venv/bin/rmdraw dump page.rm` prints one line per stroke
 (tool, colour, rgba, thickness scale, point count, bbox in device units).
+
+**Publishing to the gallery** (when the user is happy with a drawing): save its JSON as
+`examples/<name>.json`, add `<name>` to `DRAWINGS` in `tools/build_gallery.py`, run the
+script, add a row to `out/README.md`, and commit `examples/<name>.json` plus
+`out/drawings/<name>/`. Device thumbnails go in `out/<section>/<name>/tablet/` by hand.
 
 ## The shapes JSON format
 
