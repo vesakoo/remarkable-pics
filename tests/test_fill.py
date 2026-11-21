@@ -162,3 +162,23 @@ def test_budget_impossible_raises():
     shapes = [FilledShape([square(i * 3, 0, 2)], (0, 0, 0), None) for i in range(50)]
     with pytest.raises(ValueError, match="50"):
         shapes_to_strokes(shapes, budget=10)
+
+
+def _band_len(strokes):
+    return sum(math.dist(a, b) for s in strokes if s.pen == "shader"
+               for a, b in zip(s.points, s.points[1:]))
+
+
+def test_inset_outer_has_more_band_than_half():
+    glyph = [square(x, y, 2.0, ccw=False) for x in (6, 12) for y in (6, 12)]
+    shapes = [FilledShape([square(0, 0, 20)] + glyph, ORANGE, None, fill_rule="evenodd")]
+    half = shapes_to_strokes(shapes, spacing_mm=1.2, inset="half", budget=1000)
+    quarter = shapes_to_strokes(shapes, spacing_mm=1.2, inset="quarter", budget=1000)
+    outer = shapes_to_strokes(shapes, spacing_mm=1.2, inset="outer", budget=1000)
+    assert _band_len(outer) > _band_len(half)
+    assert _band_len(quarter) > _band_len(half)
+
+
+def test_inset_invalid():
+    with pytest.raises(ValueError):
+        shapes_to_strokes([FilledShape([square(0, 0, 5)], ORANGE, None)], inset="bogus")

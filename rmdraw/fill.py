@@ -95,11 +95,28 @@ def _lines(g: BaseGeometry) -> list[LineString]:
     return out
 
 
-def _band(area: BaseGeometry, spacing: float, inset: float, angle: float) -> list[LineString]:
+def _inset_area(area: BaseGeometry, inset: float, outer_only: bool) -> BaseGeometry:
+    if inset <= 0:
+        return area
+    if not outer_only:
+        return area.buffer(-inset)
+    parts = []
+    for poly in getattr(area, "geoms", [area]):
+        if poly.geom_type != "Polygon":
+            continue
+        g = Polygon(poly.exterior).buffer(-inset)
+        if poly.interiors and not g.is_empty:
+            g = g.difference(shapely.union_all([Polygon(r) for r in poly.interiors]))
+        parts.append(g)
+    return shapely.union_all(parts) if parts else EMPTY
+
+
+def _band(area: BaseGeometry, spacing: float, inset: float, angle: float,
+          outer_only: bool = False) -> list[LineString]:
     """Parallel lines `spacing` apart at `angle` degrees, clipped to `area` inset by `inset`."""
     if area.is_empty:
         return []
-    inner = area.buffer(-inset) if inset > 0 else area
+    inner = _inset_area(area, inset, outer_only)
     if inner.is_empty:
         return []
     origin = inner.centroid
@@ -120,7 +137,7 @@ def _band(area: BaseGeometry, spacing: float, inset: float, angle: float) -> lis
     return out
 
 
-def _render(shapes, method, spacing, category, drop_small, simplify, cache) -> list[Stroke]:
+def _render(shapes, method, spacing, category, drop_small, simplify, cache, inset="half") -> list[Stroke]:
     key = drop_small
     if key not in cache:
         cache[key] = [_shape_area(s, drop_small) if s.fill_rgb is not None else EMPTY
@@ -160,6 +177,7 @@ def _render(shapes, method, spacing, category, drop_small, simplify, cache) -> l
     else:
         width, angle = spacing * BAND_OVERLAP, 0.0
 
+    factor = {"half": 0.5, "quarter": 0.25, "outer": 0.5}[inset]
     fill_strokes: list[Stroke] = []
     outline_strokes: list[Stroke] = []
     for i, s in enumerate(shapes):
@@ -172,7 +190,7 @@ def _render(shapes, method, spacing, category, drop_small, simplify, cache) -> l
             if not _is_white(s.fill_rgb):
                 visible = areas[i].difference(cover) if not cover.is_empty else areas[i]
                 name, rgba = to_pen_color(s.fill_rgb, category)
-                for seg in _band(visible, spacing, width / 2.0, angle):
+                for seg in _band(visible, spacing, width * factor, angle, inset == "outer"):
                     pts = [tuple(p) for p in seg.coords]
                     if method == "shader":
                         fill_strokes.append(Stroke(pts, pen="shader", width_mm=width, rgba=rgba))
@@ -211,12 +229,17 @@ def shapes_to_strokes(
     spacing_mm: float | None = None,
     budget: int = 150,
     category: str | None = None,
+    inset: str = "half",
 ) -> list[Stroke]:
     """Convert shapes (in paint order) to fill strokes followed by outline strokes.
 
     Over budget: widen spacing in 25% steps up to 2x, then drop rings < 1 mm^2,
     then simplify outlines at 0.2 mm; raise ValueError if still over.
+    inset: "half" (band edge inset by width/2), "quarter" (width/4), or "outer" (only the
+    exterior boundary is inset by width/2; holes keep their true edge).
     """
+    if inset not in ("half", "quarter", "outer"):
+        raise ValueError(f"unknown inset {inset!r}")
     if method not in DEFAULT_SPACING:
         raise ValueError(f"unknown fill method {method!r}")
     base = spacing_mm if spacing_mm is not None else DEFAULT_SPACING[method]
@@ -227,7 +250,7 @@ def shapes_to_strokes(
     attempts += [(base * 2.0, True, False), (base * 2.0, True, True)]
     strokes: list[Stroke] = []
     for spacing, drop_small, simplify in attempts:
-        strokes = _render(shapes, method, spacing, category, drop_small, simplify, cache)
+        strokes = _render(shapes, method, spacing, category, drop_small, simplify, cache, inset)
         if len(strokes) <= budget:
             return strokes
     raise ValueError(f"{len(strokes)} strokes exceed the budget of {budget} after simplification")
