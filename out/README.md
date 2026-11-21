@@ -31,16 +31,17 @@ architecture diagrams.
 
 ## Quantum circuit symbols
 
-[`symbols/quantum-gates/quantum-gates.rmdoc`](symbols/quantum-gates/quantum-gates.rmdoc) · 8 pages.
+[`symbols/quantum-gates/quantum-gates.rmdoc`](symbols/quantum-gates/quantum-gates.rmdoc) · 9 pages.
 Page 1: single-qubit gate tiles (H X Y Z S T SX B I P, S† T† SX†, RX RY RZ U M, reset, barrier) and
 multi-qubit gates (CX, CZ, CCX/Toffoli, CXC, SWAP, CSWAP/Fredkin, iSWAP, √SWAP), plus loose control
 dots, targets and connectors to build any controlled gate. Page 2: kets and bras for
-0, 1, +, −, i+, i−, the Bell states β00–β11 and ready In/Out boxes. Pages 3–8: empty circuit
+0, 1, +, −, i+, i−, the Bell states β00–β11 and ready In/Out boxes. Page 3: six Bloch spheres
+from different angles, state vector left empty to draw by hand. Pages 4–9: empty circuit
 templates for 1–6 qubits. Tiles are sized to the template wires, so lasso → copy → paste fits.
 
-| Gates | States | 3-qubit template |
-|---|---|---|
-| ![gates](symbols/quantum-gates/quantum-gates-p1.png) | ![states](symbols/quantum-gates/quantum-gates-p2.png) | ![circuit](symbols/quantum-gates/quantum-gates-p5.png) |
+| Gates | States | Bloch spheres | 3-qubit template |
+|---|---|---|---|
+| ![gates](symbols/quantum-gates/quantum-gates-p1.png) | ![states](symbols/quantum-gates/quantum-gates-p2.png) | ![bloch](symbols/quantum-gates/quantum-gates-p3.png) | ![circuit](symbols/quantum-gates/quantum-gates-p6.png) |
 
 Source: [`examples/quantum_gates.py`](../examples/quantum_gates.py)
 
