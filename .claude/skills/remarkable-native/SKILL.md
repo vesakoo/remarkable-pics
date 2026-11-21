@@ -24,10 +24,15 @@ Tooling: Python package `rmdraw/` plus the `rmdraw` CLI. Always use the project 
 2. `.venv/bin/rmdraw build out/fox.json -o out/fox.rmdoc`
 3. `.venv/bin/rmdraw preview out/fox.rmdoc -o out/fox.svg` (add `--page N` for page N, from 1)
 4. Render a PNG and **look at it** (see Verify). Fix the JSON and repeat until it reads well.
-5. Only when the user wants it on the tablet: `.venv/bin/rmdraw push out/fox.rmdoc --thumbs out/fox-thumbs`
+5. Getting it onto the tablet (only when the user wants it there):
+   - **Default, works for everyone:** give the user `out/fox.rmdoc` to drag into the
+     reMarkable desktop app, which syncs it to the tablet.
+   - **Optional, needs SSH (developer mode):** `.venv/bin/rmdraw push out/fox.rmdoc --thumbs out/fox-thumbs`.
+     This user has SSH. See "The device".
 
 **SVG file:**
-`.venv/bin/rmdraw svg art.svg -o out/art.rmdoc [--box x,y,w,h] [--fill shader|marker|hatch|none] [--name "Title"]`.
+`.venv/bin/rmdraw svg art.svg -o out/art.rmdoc [--box x,y,w,h] [--fill shader|marker|hatch|none] [--name "Title"] [--budget N]`.
+The whole SVG is one object with a 150-stroke budget. `--budget N` raises it and prints a warning when N > 150.
 The default box is the page minus 10 mm margins. The SVG is scaled to fit and centred.
 Inside a shapes JSON, use an `svg` item to place SVGs next to other shapes.
 
@@ -108,10 +113,16 @@ look). The outline is drawn separately in the item's own pen, colour and width. 
 yellow face with a black outline is `color: "black"` plus `fill: {color: "yellow"}`.
 Fill only what needs colour. Outlines alone are often the clearest.
 
-**Budgets:** keep each object at ≤ 150 strokes and a page at no more than a few
-thousand (3000 triggers a warning). A filled 120 mm circle costs about 100 shader
-bands, or more where details cut through it (the smiley face is 130). `spacing_mm: 2` halves that. Bigger fills cost more strokes. A fill over 150
-strokes is widened automatically, and if it still doesn't fit, it fails with a message.
+**Budgets (enforced):** every item that has a fill or comes from an svg is one object,
+and it gets **at most 150 strokes, outline included**. A page should stay below a few
+thousand strokes; 3000 triggers a warning. A filled 120 mm circle costs about 100 shader
+bands, or more where details cut through it (the smiley face is 130), and
+`spacing_mm: 2` halves that. A fill that goes over is first widened automatically (up to
+2× spacing). If it still doesn't fit, `build` fails with `pages[P][I]: ...`.
+- For an `svg` item, the whole SVG must fit in 150 strokes, or it fails with its item
+  index. Use `fill: {"method": "none"}`, a simpler SVG, or a smaller box.
+- `rmdraw svg` defaults to 150 too. `--budget N` is the only way past it, and it warns.
+- Plain lines and text are not budgeted per item, but they count towards the page.
 
 **Composition method:**
 1. Name the subject's 3–8 recognisable parts (fox: head, ears, muzzle, eyes, nose,
@@ -161,7 +172,7 @@ Python alternative: `rmdraw.model` (`Stroke(points_mm, pen, color, width_mm, rgb
      --hide-scrollbars --window-size=680,906 --screenshot="$PWD/out/x.png" "file://$PWD/out/x.svg"
    ```
    Ask: is it recognisable? Proportions? Gaps or overlaps? Text inside its space?
-3. After a push, check the device's own rendering: `rmdraw push out/x.rmdoc --thumbs out/x-thumbs`
+3. (SSH only.) After a push, check the device's own rendering: `rmdraw push out/x.rmdoc --thumbs out/x-thumbs`
    (or call `rmdraw.device.fetch_thumbnails(uuid, dir)` later). The 362×512 PNG is
    made by the tablet itself. If none appears within 10 s, ask the user to open the
    notebook, then fetch again.
@@ -170,6 +181,15 @@ Python alternative: `rmdraw.model` (`Stroke(points_mm, pen, color, width_mm, rgb
 ## The device
 
 - **reMarkable Paper Pro**, software 3.29.1.0, developer mode on. **[device]**
+- **Two import routes:**
+  1. **Desktop app drag and drop (default; no developer mode needed).** The user
+     drags the `.rmdoc` into the reMarkable desktop app, and cloud sync puts it on the
+     tablet. **[unverified]** that the app accepts our zip layout; ask the user to confirm.
+  2. **SSH push (optional).** `rmdraw push`, thumbnail fetching and the reference-page
+     protocol all need SSH, and SSH needs **developer mode**. **Enabling developer mode
+     factory-resets the Paper Pro** (everything not synced is lost). Never ask a user
+     to enable it just for rmdraw. Use route 1 instead. This user already has
+     developer mode and SSH, so push is available here.
 - **SSH:** key auth as `root@10.11.99.1` over USB (`ssh -o BatchMode=yes root@10.11.99.1`).
 - Notebooks live in `/home/root/.local/share/remarkable/xochitl/` as `<uuid>.metadata`,
   `<uuid>.content`, `<uuid>/<page-uuid>.rm`, plus `<uuid>.local` and
@@ -180,9 +200,9 @@ Python alternative: `rmdraw.model` (`Stroke(points_mm, pen, color, width_mm, rgb
 - **Never delete or modify the user's notebooks or any existing file on the tablet.**
   Reading is fine (ls, cat, scp *from* the device). To replace a pushed notebook, push
   a new build (new uuid) and let the user delete the old one on the tablet.
-- The USB web interface (http://10.11.99.1) is **off** on this tablet. The other import
-  route: the user drags the `.rmdoc` into the reMarkable desktop app, which syncs it.
-  **[unverified]** that the desktop app accepts our zip layout.
+- The USB web interface (http://10.11.99.1) is **off** on this tablet.
+- `--host` must be plain `user@host`. Anything else, e.g. a value starting with `-`, is
+  rejected so ssh/scp can't read it as an option.
 - The file `.remarkable` in the project root holds a secret. **Never read, print, cat
   or commit it.**
 
@@ -213,7 +233,8 @@ Tags: **[device]** seen on the user's tablet, **[rmscene]** from rmscene 0.8.0 s
 ## Learning new facts from device examples
 
 When something is unknown (a new pen, a colour, layers, text blocks), get ground truth
-from the tablet instead of guessing:
+from the tablet instead of guessing. Steps 2–3 need SSH (developer mode; see above).
+Without SSH, the user can export the notebook from the desktop app instead.
 
 1. **Reference page protocol.** Ask the user to make a new notebook and draw exactly
    specified strokes at known positions. Example: "a dot in each corner, then one
@@ -251,8 +272,9 @@ skill or format-notes update. Keep the facts tagged.
   A white pen line on colour is just a white stroke. Use white fills to cut holes.
 - **Descenders:** text `y` is the cap top. Letters like g, j, p, q, y reach about a third of
   `height` below the baseline. Leave room below text and above the page edge.
-- **150-stroke budget per object.** Dense fills, hatch at small spacing and very
-  detailed SVGs blow it. Widen `spacing_mm`, fill fewer areas, or simplify. Pages
+- **150-stroke budget per object, enforced** (the outline counts). Dense fills, hatch
+  at small spacing and very detailed SVGs blow it, and the build then fails. Widen
+  `spacing_mm`, fill fewer areas, or simplify. Pages
   above a few thousand strokes get sluggish to open and lasso.
 - Off-page points are an error. Keep 10 mm margins; scaled SVGs can spill.
 - Arcs go clockwise in screen space (y down). A "frown" is 205 → 335.

@@ -200,3 +200,55 @@ def test_paint_order_later_fill_hides_earlier(tmp_path):
     # listed the other way round, the line stays whole on top
     doc = shapes_json.from_dict({"name": "t", "pages": [[gap, line]]})
     assert any(s.points == [(20.0, 50.0), (120.0, 50.0)] for s in doc.pages[0].strokes)
+
+
+def _many_lines_svg(tmp_path: Path, n: int = 200) -> Path:
+    lines = "".join(f'<line x1="{i}" y1="0" x2="{i}" y2="50" stroke="#000"/>' for i in range(n))
+    p = tmp_path / "many.svg"
+    p.write_text(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {n} 50" '
+                 f'width="{n}" height="50">{lines}</svg>')
+    return p
+
+
+def test_svg_item_over_budget_names_index(tmp_path):
+    svg = _many_lines_svg(tmp_path)
+    p = _write_json(tmp_path, [{"type": "circle", "cx": 50, "cy": 50, "r": 10},
+                               {"type": "svg", "path": svg.name, "box": [10, 10, 150, 60],
+                                "fill": {"method": "none"}}])
+    with pytest.raises(ValueError, match=r"pages\[0\]\[1\].*budget of 150"):
+        shapes_json.load(p)
+
+
+def test_cli_svg_budget(tmp_path, capsys):
+    svg = _many_lines_svg(tmp_path)
+    out = tmp_path / "m.rmdoc"
+    assert cli.main(["svg", str(svg), "-o", str(out), "--fill", "none"]) != 0
+    assert "budget of 150" in capsys.readouterr().err
+    assert not out.exists()
+    assert cli.main(["svg", str(svg), "-o", str(out), "--fill", "none", "--budget", "300"]) == 0
+    err = capsys.readouterr().err.strip().splitlines()
+    assert len(err) == 1 and "warning" in err[0] and "300" in err[0]
+    assert len(_pages(out, tmp_path)[0]) == 200
+
+
+def test_filled_item_total_within_budget():
+    item = {"type": "circle", "cx": 90, "cy": 120, "r": 75,
+            "fill": {"color": "yellow", "spacing_mm": 0.5}}
+    try:
+        doc = shapes_json.from_dict({"name": "t", "pages": [[item]]})
+    except ValueError as e:
+        assert "pages[0][0]" in str(e)
+    else:
+        assert len(doc.pages[0].strokes) <= shapes_json.ITEM_BUDGET
+
+
+@pytest.mark.parametrize("host", ["-oProxyCommand=touch /tmp/x", "root@10.11.99.1;ls",
+                                  "10.11.99.1", "root@host -x", "-x@host"])
+def test_cli_push_rejects_bad_host(tmp_path, monkeypatch, capsys, host):
+    called = []
+    monkeypatch.setattr(device, "install_rmdoc", lambda *a, **k: called.append(a))
+    rmdoc = tmp_path / "s.rmdoc"
+    rmdoc.write_bytes(b"")
+    assert cli.main(["push", str(rmdoc), f"--host={host}"]) != 0
+    assert "invalid host" in capsys.readouterr().err
+    assert not called

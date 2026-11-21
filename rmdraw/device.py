@@ -14,6 +14,16 @@ SCP = ["scp", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10", "-r"]
 UUID_RE = r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
 
 
+HOST_RE = r"[A-Za-z0-9._-]+@[A-Za-z0-9.-]+"
+
+
+def check_host(host: str) -> str:
+    """Reject anything ssh/scp could read as an option (e.g. -oProxyCommand=...)."""
+    if not isinstance(host, str) or host.startswith("-") or not re.fullmatch(HOST_RE, host):
+        raise ValueError(f"invalid host {host!r} (expected user@host, e.g. root@10.11.99.1)")
+    return host
+
+
 def _check_uuid(uuid: str) -> str:
     if not isinstance(uuid, str) or not re.fullmatch(UUID_RE, uuid):
         raise ValueError(f"invalid document uuid {uuid!r}")
@@ -39,6 +49,7 @@ def _doc_uuid(names: list[str]) -> str:
 
 
 def install_rmdoc(path: Path, host: str = "root@10.11.99.1", runner=subprocess.run) -> str:
+    check_host(host)
     path = Path(path)
     with tempfile.TemporaryDirectory() as tmp:
         with zipfile.ZipFile(path) as z:
@@ -61,6 +72,7 @@ def install_rmdoc(path: Path, host: str = "root@10.11.99.1", runner=subprocess.r
 
 def fetch_thumbnails(doc_uuid: str, out_dir: Path, host: str = "root@10.11.99.1",
                      runner=subprocess.run, wait_s: float = 10, sleep=time.sleep) -> list[Path]:
+    check_host(host)
     _check_uuid(doc_uuid)
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)

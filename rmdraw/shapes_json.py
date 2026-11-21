@@ -275,15 +275,17 @@ def _text(it: _Item, style: dict) -> list[Stroke]:
 
 
 def svg_strokes(path: Path, box: tuple[float, float, float, float], method: str = "shader",
-                spacing_mm: float | None = None) -> list[Stroke]:
-    """SVG file -> strokes fitted into box (mm). method 'none' draws outlines only."""
+                spacing_mm: float | None = None, budget: int = ITEM_BUDGET) -> list[Stroke]:
+    """SVG file -> strokes fitted into box (mm). method 'none' draws outlines only.
+
+    The whole SVG counts as one object: more than `budget` strokes raises ValueError.
+    """
     shapes = svg_to_shapes(Path(path), box, tolerance_mm=TOLERANCE_MM)
     if method == "none":
         shapes = [FilledShape(s.outline, None, s.stroke_rgb or s.fill_rgb, s.fill_rule,
                               s.stroke_width_mm) for s in shapes
                   if (s.stroke_rgb or s.fill_rgb) is not None]
         method = "shader"
-    budget = max(ITEM_BUDGET, 4 * len(shapes))
     return shapes_to_strokes(shapes, method=method, spacing_mm=spacing_mm, budget=budget)
 
 
@@ -397,19 +399,23 @@ def _page(items, p: int, base: Path) -> Page:
     for i in range(len(built) - 1, -1, -1):
         strokes_i, filled = built[i]
         mine: list[Stroke] = []
+        for st in strokes_i:
+            mine += _clip(st, cover)
         if filled is not None:
             area, fill = filled
             visible = area.difference(cover) if cover is not None else area
             if fill["rgb"] != FILL_RGB["white"] and not visible.is_empty:
                 shape = FilledShape(_rings(visible), fill["rgb"], None, "evenodd")
                 try:
-                    mine += shapes_to_strokes([shape], method=fill["method"],
-                                              spacing_mm=fill["spacing"], outlines=False,
-                                              budget=ITEM_BUDGET)
-                except ValueError as e:
-                    raise ValueError(f"pages[{p}][{i}]: {e}") from None
-        for st in strokes_i:
-            mine += _clip(st, cover)
+                    # the item's outline counts towards its budget
+                    mine[:0] = shapes_to_strokes([shape], method=fill["method"],
+                                                 spacing_mm=fill["spacing"], outlines=False,
+                                                 budget=max(1, ITEM_BUDGET - len(mine)))
+                except ValueError:
+                    raise ValueError(
+                        f"pages[{p}][{i}]: the fill plus outline needs more than "
+                        f"{ITEM_BUDGET} strokes (the per-object budget); increase "
+                        "fill.spacing_mm, make the shape smaller or split it") from None
         strokes[:0] = mine
         if filled is not None:
             cover = filled[0] if cover is None else cover.union(filled[0])

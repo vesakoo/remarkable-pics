@@ -124,3 +124,15 @@ def test_fetch_rejects_bad_uuid(tmp_path):
     with pytest.raises(ValueError):
         device.fetch_thumbnails("x; reboot", tmp_path, runner=f)
     assert f.cmds == []
+
+
+@pytest.mark.parametrize("host", ["-oProxyCommand=touch /tmp/x", "root@x;ls", "nohost", ""])
+def test_device_rejects_bad_host(tmp_path, host):
+    def runner(*a, **k):
+        raise AssertionError("must not run ssh/scp")
+    with pytest.raises(ValueError, match="invalid host"):
+        device.install_rmdoc(tmp_path / "x.rmdoc", host=host, runner=runner)
+    with pytest.raises(ValueError, match="invalid host"):
+        device.fetch_thumbnails("0b1c2d3e-0000-4000-8000-000000000000", tmp_path, host=host,
+                                runner=runner)
+    assert device.check_host("root@10.11.99.1") == "root@10.11.99.1"

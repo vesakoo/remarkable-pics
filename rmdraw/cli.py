@@ -46,6 +46,13 @@ def _write(doc: Document, out: Path) -> None:
     print(f"wrote {out} ({len(doc.pages)} page(s), {n} strokes)")
 
 
+def _host(s: str) -> str:
+    try:
+        return device.check_host(s)
+    except ValueError as e:
+        raise argparse.ArgumentTypeError(str(e)) from None
+
+
 def _need_file(p: Path) -> Path:
     if not p.is_file():
         raise CliError(f"no such file: {p}")
@@ -60,7 +67,12 @@ def cmd_build(a) -> int:
 
 def cmd_svg(a) -> int:
     src = _need_file(Path(a.svg))
-    strokes = shapes_json.svg_strokes(src, a.box, a.fill)
+    if a.budget < 1:
+        raise CliError("--budget must be at least 1")
+    if a.budget > shapes_json.ITEM_BUDGET:
+        print(f"rmdraw: warning: --budget {a.budget} is above {shapes_json.ITEM_BUDGET} "
+              "strokes per object; the tablet may get sluggish", file=sys.stderr)
+    strokes = shapes_json.svg_strokes(src, a.box, a.fill, budget=a.budget)
     if not strokes:
         raise CliError(f"{src}: no visible shapes found")
     _write(Document(a.name or src.stem, [Page(strokes)]), Path(a.output))
@@ -117,6 +129,8 @@ def _parser() -> argparse.ArgumentParser:
                    help="x,y,w,h in mm (default: the page minus 10 mm margins)")
     s.add_argument("--fill", choices=("shader", "marker", "hatch", "none"), default="shader")
     s.add_argument("--name", help="notebook title (default: the file name)")
+    s.add_argument("--budget", type=int, default=shapes_json.ITEM_BUDGET,
+                   help="max strokes for the whole SVG (default 150; above warns)")
     s.set_defaults(func=cmd_svg)
 
     v = sub.add_parser("preview", help=".rmdoc page -> SVG preview")
@@ -132,7 +146,7 @@ def _parser() -> argparse.ArgumentParser:
     u = sub.add_parser("push", help="add an .rmdoc to the tablet over SSH (never deletes)")
     u.add_argument("rmdoc")
     u.add_argument("--thumbs", metavar="DIR", help="fetch the device thumbnails into DIR")
-    u.add_argument("--host", default="root@10.11.99.1")
+    u.add_argument("--host", type=_host, default="root@10.11.99.1")
     u.set_defaults(func=cmd_push)
     return p
 
