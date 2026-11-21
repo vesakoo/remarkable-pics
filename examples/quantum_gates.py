@@ -1,4 +1,4 @@
-"""Quantum circuit symbol library: gates, kets/bras, Bell states and 1-6 qubit circuit templates.
+"""Quantum circuit symbol library: gates, kets/bras, Bell states, Bloch spheres, 1-6 qubit templates.
 
     .venv/bin/python examples/quantum_gates.py        # -> out/symbols/quantum-gates/
 
@@ -388,7 +388,71 @@ def page_states():
     return p.page()
 
 
-# ---- pages 3..8: circuit templates --------------------------------------------------------
+# ---- page 3: Bloch spheres ------------------------------------------------------------------
+SPHERE = "#c9d3e3"
+VIEWS = [(-62, 18), (-75, 12), (-45, 24), (-30, 15), (-66, -14), (-58, 34)]   # (azimuth, elevation)
+
+
+def _view(az, el):
+    a, e = math.radians(az), math.radians(el)
+    d = (math.cos(e) * math.cos(a), math.cos(e) * math.sin(a), math.sin(e))
+    r = (-math.sin(a), math.cos(a), 0.0)
+    u = (-math.sin(e) * math.cos(a), -math.sin(e) * math.sin(a), math.cos(e))
+    dot = lambda p, q: sum(i * j for i, j in zip(p, q))
+    return lambda p: (dot(p, r), dot(p, u), dot(p, d))
+
+
+def bloch(p, cx, cy, R, az, el):
+    proj = _view(az, el)
+    P = lambda q: (cx + R * proj(q)[0], cy - R * proj(q)[1])
+    p.circle(cx, cy, R, fill=SPHERE, width=0.45)
+
+    def ring(f, width, color):
+        pts = [f(2 * math.pi * i / 96) for i in range(97)]
+        for a, b in zip(pts, pts[1:]):
+            front = proj(a)[2] + proj(b)[2] >= 0
+            if front:
+                p.line([P(a), P(b)], width, color)
+            else:
+                p.dashed(P(a), P(b), width * 0.8, "gray", on=0.9, off=1.3)
+    c, s_ = math.cos, math.sin
+    ring(lambda t: (c(t), s_(t), 0), 0.4, "black")    # equator
+    ring(lambda t: (c(t), 0, s_(t)), 0.3, "gray")     # x-z meridian
+    ring(lambda t: (0, c(t), s_(t)), 0.3, "gray")     # y-z meridian
+    for axis in ((1, 0, 0), (0, 1, 0), (0, 0, 1)):
+        neg = tuple(-v for v in axis)
+        for end in (axis, neg):
+            if proj(end)[2] >= 0:
+                p.line([(cx, cy), P(end)], 0.35)
+            else:
+                p.dashed((cx, cy), P(end), 0.3, "gray", on=0.9, off=1.1)
+    labels = [((0, 0, 1), "0", "z"), ((0, 0, -1), "1", None), ((1, 0, 0), "+", "x"),
+              ((-1, 0, 0), "-", None), ((0, 1, 0), "i", "y"), ((0, -1, 0), "-i", None)]
+    for v, k, axis_name in labels:
+        x, y = P(v)
+        dx, dy = x - cx, y - cy
+        L = math.hypot(dx, dy) or 1.0
+        ux, uy = dx / L, dy / L
+        lx, ly = x + ux * 6.0, y + uy * 4.6
+        _, w = run([ket(k)], 0, 0, 2.7)
+        p.rect(lx - w / 2 - 0.4, ly - 2.3, w + 0.8, 4.6, fill="white", outline=False, rx=0.8)
+        p.label([ket(k)], lx, ly, 2.7, width=0.32)
+        if axis_name:
+            p.label(axis_name, x + ux * 12.5, y + uy * 9.5, 2.8, color="gray", width=0.3)
+    p.circle(cx, cy, 1.1, fill="red")
+
+
+def page_bloch():
+    p = Ink()
+    p.text("Bloch spheres", 90, 10, 6.5, align="center", width=0.6)
+    p.text("Six viewing angles. Copy one and draw the state vector by hand.", 90, 19, 2.6,
+           align="center", color="gray")
+    for i, (az, el) in enumerate(VIEWS):
+        bloch(p, 50 + (i % 2) * 80, 62 + (i // 2) * 68, 23, az, el)
+    return p.page()
+
+
+# ---- pages 4..9: circuit templates --------------------------------------------------------
 X0, XIN, XOUT, X1 = 10.0, 40.0, 142.0, 170.0
 STEPS = 6
 
@@ -426,7 +490,7 @@ def page_circuit(n):
 
 
 def build() -> Document:
-    pages = [page_gates(), page_states()] + [page_circuit(n) for n in range(1, 7)]
+    pages = [page_gates(), page_states(), page_bloch()] + [page_circuit(n) for n in range(1, 7)]
     doc = from_dict({"name": NAME, "pages": [items for items, _ in pages]})
     for page, (_, strokes) in zip(doc.pages, pages):
         page.strokes.extend(strokes)
