@@ -26,8 +26,9 @@ Tooling: Python package `rmdraw/` plus the `rmdraw` CLI. Always use the project 
 4. Render a PNG and **look at it** (see Verify). Fix the JSON and repeat until it reads well.
 5. Getting it onto the tablet (only when the user wants it there):
    - **Default (no developer mode needed):** give the user `out/fox.rmdoc` to drag into
-     the reMarkable desktop app, which syncs it to the tablet. **[unverified]** for our
-     files: confirm with the user that the import worked.
+     the reMarkable desktop app, which syncs it to the tablet. **[device]** confirmed
+     2026-11-21 with the owl. The tablet showed it only after a restart, so tell the user
+     to restart the tablet if the notebook doesn't appear.
    - **Optional, needs SSH (developer mode):** `.venv/bin/rmdraw push out/fox.rmdoc --thumbs out/fox-thumbs`.
      The first stdout line is `installed <uuid>`, followed by any thumbnail paths.
      Later: `.venv/bin/rmdraw thumbs <uuid> -o out/fox-thumbs [--wait S]`.
@@ -229,7 +230,8 @@ Python alternative: `rmdraw.model` (`Stroke(points, pen, color, width_mm, rgba)`
 - **Two import routes:**
   1. **Desktop app drag and drop (default; no developer mode needed).** The user
      drags the `.rmdoc` into the reMarkable desktop app, and cloud sync puts it on the
-     tablet. **[unverified]** that the app accepts our zip layout; ask the user to confirm.
+     tablet. **[device]** the app accepts our zip layout (owl, 2026-11-21); the tablet
+     needed a restart before the notebook showed up.
   2. **SSH push (optional).** `rmdraw push`, thumbnail fetching and the reference-page
      protocol all need SSH, and SSH needs **developer mode**. **Enabling developer mode
      factory-resets the Paper Pro** (everything not synced is lost). Never ask a user

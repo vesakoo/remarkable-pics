@@ -123,7 +123,7 @@ This means the shader takes **arbitrary ARGB**. That's the best candidate for AW
 ## Open questions for calibration
 
 - Answered: pens ignore rgba; shader honours it (see the import test above).
-- Is the `.rmdoc` zip layout `<uuid>.content`, `<uuid>.metadata`, `<uuid>/<page>.rm` accepted by the desktop app (drag and drop)? The USB web interface is off on this tablet, so the device has only been loaded over SSH (`rmdraw push`). Which of the device's `.content` keys are required?
+- Answered 2026-11-21 [device]: the desktop app accepts our `.rmdoc` by drag and drop (`out/owl.rmdoc`); it synced to the tablet, which showed it after a restart. Still open: which of the device's `.content` keys are required.
 - Minimum speed, direction and pressure values for strokes to render with full width.
 
 ## Where these facts are used
