@@ -148,7 +148,7 @@ def test_cli_push_uses_device(tmp_path, monkeypatch, capsys):
         calls["install"] = (Path(path), host)
         return "0b1c2d3e-0000-4000-8000-000000000000"
 
-    def fake_thumbs(uuid, out_dir, host="root@10.11.99.1"):
+    def fake_thumbs(uuid, out_dir, host="root@10.11.99.1", wait_s=10):
         calls["thumbs"] = (uuid, Path(out_dir))
         return [Path(out_dir) / "p.png"]
 
@@ -158,7 +158,9 @@ def test_cli_push_uses_device(tmp_path, monkeypatch, capsys):
     assert cli.main(["push", str(out), "--thumbs", str(tmp_path / "th")]) == 0
     assert calls["install"] == (out, "root@10.11.99.1")
     assert calls["thumbs"] == ("0b1c2d3e-0000-4000-8000-000000000000", tmp_path / "th")
-    assert "0b1c2d3e-0000-4000-8000-000000000000" in capsys.readouterr().out
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[0] == "installed 0b1c2d3e-0000-4000-8000-000000000000"
+    assert lines[1:] == [str(tmp_path / "th" / "p.png")]
 
 
 def test_cli_error_no_traceback(tmp_path, capsys):
@@ -252,3 +254,35 @@ def test_cli_push_rejects_bad_host(tmp_path, monkeypatch, capsys, host):
     assert cli.main(["push", str(rmdoc), f"--host={host}"]) != 0
     assert "invalid host" in capsys.readouterr().err
     assert not called
+
+
+UID = "0b1c2d3e-0000-4000-8000-000000000000"
+
+
+def test_cli_thumbs(tmp_path, monkeypatch, capsys):
+    calls = []
+
+    def fake(uuid, out_dir, host="root@10.11.99.1", wait_s=10):
+        calls.append((uuid, Path(out_dir), host, wait_s))
+        return [Path(out_dir) / "a.png", Path(out_dir) / "b.png"]
+
+    monkeypatch.setattr(device, "fetch_thumbnails", fake)
+    assert cli.main(["thumbs", UID, "-o", str(tmp_path), "--wait", "45"]) == 0
+    assert calls == [(UID, tmp_path, "root@10.11.99.1", 45.0)]
+    assert capsys.readouterr().out.splitlines() == [str(tmp_path / "a.png"),
+                                                    str(tmp_path / "b.png")]
+
+
+def test_cli_thumbs_none_yet(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(device, "fetch_thumbnails", lambda *a, **k: [])
+    assert cli.main(["thumbs", UID, "-o", str(tmp_path)]) != 0
+    err = capsys.readouterr().err.strip().splitlines()
+    assert len(err) == 1 and "no thumbnail" in err[0]
+
+
+def test_cli_thumbs_rejects_bad_args(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(device, "fetch_thumbnails",
+                        lambda *a, **k: (_ for _ in ()).throw(AssertionError("called")))
+    assert cli.main(["thumbs", "not-a-uuid", "-o", str(tmp_path)]) != 0
+    assert cli.main(["thumbs", UID, "-o", str(tmp_path), "--host", "-oX=y"]) != 0
+    assert "Traceback" not in capsys.readouterr().err

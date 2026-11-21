@@ -102,6 +102,7 @@ This means the shader takes **arbitrary ARGB**. That's the best candidate for AW
 - **Fineliner RED + `color_rgba` orange renders RED.** Pens ignore `color_rgba`; only the enum counts.
 - Highlighter HIGHLIGHT_ORANGE (15) renders orange, with a square-ended band.
 - Consequence for fills: use the shader with exact rgba for coloured areas. Use palette pens for outlines and text.
+- Thumbnails of pushed notebooks (seen across several pushes, e.g. the fresh-session fox test): sometimes ready within ~10 s, sometimes after more than 40 s, sometimes only once the notebook is opened on the tablet. Often only page 1 gets one. `rmdraw thumbs <uuid>` retries. [device]
 
 ## Fill defaults [device]
 

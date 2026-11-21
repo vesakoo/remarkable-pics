@@ -1,7 +1,8 @@
-"""rmdraw command line: build, svg, preview, dump, push."""
+"""rmdraw command line: build, svg, preview, dump, push, thumbs."""
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 import warnings
 from pathlib import Path
@@ -53,6 +54,22 @@ def _host(s: str) -> str:
         raise argparse.ArgumentTypeError(str(e)) from None
 
 
+def _uuid(s: str) -> str:
+    if not re.fullmatch(device.UUID_RE, s):
+        raise argparse.ArgumentTypeError(f"invalid document uuid {s!r}")
+    return s
+
+
+def _wait(s: str) -> float:
+    try:
+        v = float(s)
+    except ValueError:
+        v = -1.0
+    if not 0 <= v <= 600:
+        raise argparse.ArgumentTypeError(f"--wait must be 0..600 seconds, got {s!r}")
+    return v
+
+
 def _need_file(p: Path) -> Path:
     if not p.is_file():
         raise CliError(f"no such file: {p}")
@@ -100,15 +117,29 @@ def cmd_dump(a) -> int:
     return 0
 
 
+def _no_thumbs(uuid: str) -> str:
+    return (f"no thumbnail yet for {uuid}: ask the user to open the notebook on the tablet, "
+            f"then retry: rmdraw thumbs {uuid} -o DIR --wait 60")
+
+
 def cmd_push(a) -> int:
     uuid = device.install_rmdoc(_need_file(Path(a.rmdoc)), host=a.host)
-    print(uuid)
+    print(f"installed {uuid}", flush=True)
     if a.thumbs:
-        pngs = device.fetch_thumbnails(uuid, Path(a.thumbs), host=a.host)
+        pngs = device.fetch_thumbnails(uuid, Path(a.thumbs), host=a.host, wait_s=a.wait)
         if not pngs:
-            print("no thumbnail yet: open the notebook on the tablet, then retry", file=sys.stderr)
+            print(f"rmdraw: warning: {_no_thumbs(uuid)}", file=sys.stderr)
         for png in pngs:
             print(png)
+    return 0
+
+
+def cmd_thumbs(a) -> int:
+    pngs = device.fetch_thumbnails(a.uuid, Path(a.output), host=a.host, wait_s=a.wait)
+    if not pngs:
+        raise CliError(_no_thumbs(a.uuid))
+    for png in pngs:
+        print(png)
     return 0
 
 
@@ -146,8 +177,18 @@ def _parser() -> argparse.ArgumentParser:
     u = sub.add_parser("push", help="add an .rmdoc to the tablet over SSH (never deletes)")
     u.add_argument("rmdoc")
     u.add_argument("--thumbs", metavar="DIR", help="fetch the device thumbnails into DIR")
+    u.add_argument("--wait", type=_wait, default=10.0, metavar="S",
+                   help="seconds to wait for thumbnails (default 10)")
     u.add_argument("--host", type=_host, default="root@10.11.99.1")
     u.set_defaults(func=cmd_push)
+
+    t = sub.add_parser("thumbs", help="fetch the device thumbnails of a pushed notebook")
+    t.add_argument("uuid", type=_uuid)
+    t.add_argument("-o", "--output", required=True, metavar="DIR")
+    t.add_argument("--wait", type=_wait, default=10.0, metavar="S",
+                   help="seconds to wait for thumbnails (default 10)")
+    t.add_argument("--host", type=_host, default="root@10.11.99.1")
+    t.set_defaults(func=cmd_thumbs)
     return p
 
 

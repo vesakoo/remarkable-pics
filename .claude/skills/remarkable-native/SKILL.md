@@ -28,6 +28,8 @@ Tooling: Python package `rmdraw/` plus the `rmdraw` CLI. Always use the project 
    - **Default, works for everyone:** give the user `out/fox.rmdoc` to drag into the
      reMarkable desktop app, which syncs it to the tablet.
    - **Optional, needs SSH (developer mode):** `.venv/bin/rmdraw push out/fox.rmdoc --thumbs out/fox-thumbs`.
+     The first stdout line is `installed <uuid>`, followed by any thumbnail paths.
+     Later: `.venv/bin/rmdraw thumbs <uuid> -o out/fox-thumbs [--wait S]`.
      This user has SSH. See "The device".
 
 **SVG file:**
@@ -79,19 +81,25 @@ types, fields, pens and colours are rejected, and so is any point off the page.
 **Paint order = list order.** A filled item **hides** everything listed before it
 where they overlap (fills and lines are clipped). So list the background first and the
 details last. A `white` fill draws nothing, but it still hides what lies below: that's
-how to cut a gap (e.g. the white of an eye) into a coloured area.
+how to cut a gap (e.g. the white of an eye) into a coloured area. **Its outline is
+still drawn** in the item's `color` (default black). For a seamless white patch inside a
+coloured area (e.g. a fox's muzzle), set `color` to the surrounding fill's nearest pen
+colour, or keep the line as a deliberate contour.
 
 ## Composing a drawing from a description
 
-**Page:** 179.7 × 239.6 mm (portrait). **Safe area:** keep content inside x 10–170,
-y 10–230 mm. The centre is (90, 120). A single subject reads best at about 100–140 mm
-wide, a bit above the centre, with an optional caption below.
+**Page:** 179.7 × 239.6 mm (portrait). **Safe area:** the page minus about 10 mm
+margins, i.e. x 10–170, y 10–230 mm (about 160 × 220 mm). The centre is (90, 120). A
+single subject such as a head or an animal may fill most of the safe area. 100–150 mm
+wide, a bit above the centre, with room for an optional caption below, reads well. Keep
+about ≤ 150 strokes per filled item and a few thousand per page (see Budgets).
 
 **Pen colours** (`color`, the fixed palette; pens ignore anything else):
 `black gray white blue red green yellow cyan magenta`. Highlighter colours:
 `hl_yellow hl_blue hl_pink hl_orange hl_green hl_gray` (use them with `pen: "highlighter"`).
-`pink` exists too, but it's a highlighter enum and untested on pens. **[device]** for the
-first nine and the six highlighter colours.
+**[device]** for the first nine and the six highlighter colours. `pink` is accepted, but
+it's the same enum as `hl_pink` (5). As a pen (non-highlighter) colour it is
+**[unverified]**, so prefer `red` or `magenta` for pens.
 
 **Fill colours** (`fill.color`): any `"#rrggbb"` (the shader honours exact RGB, so
 brown, orange, skin tones and pastels all work), or the names
@@ -171,11 +179,25 @@ Python alternative: `rmdraw.model` (`Stroke(points_mm, pen, color, width_mm, rgb
    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless --disable-gpu \
      --hide-scrollbars --window-size=680,906 --screenshot="$PWD/out/x.png" "file://$PWD/out/x.svg"
    ```
+   Chrome may print harmless log noise (e.g. a `CVDisplayLink` error). The PNG is still
+   written, so check that the file exists rather than reading the log.
    Ask: is it recognisable? Proportions? Gaps or overlaps? Text inside its space?
-3. (SSH only.) After a push, check the device's own rendering: `rmdraw push out/x.rmdoc --thumbs out/x-thumbs`
-   (or call `rmdraw.device.fetch_thumbnails(uuid, dir)` later). The 362×512 PNG is
-   made by the tablet itself. If none appears within 10 s, ask the user to open the
-   notebook, then fetch again.
+   **Fills show as visible horizontal bands with tiny white specks at their edges in
+   the preview.** That is the shader banding. On the device the bands blend more
+   smoothly (RM-SMOKE and RM-CALIBRATION in `docs/format-notes.md`). Don't "fix" a
+   drawing because of it.
+3. (SSH only.) After a push, check the device's own rendering, a 362×512 PNG made by
+   the tablet itself:
+   - `rmdraw push out/x.rmdoc --thumbs out/x-thumbs [--wait S]` prints `installed <uuid>`
+     first, then the saved PNG paths.
+   - Later or again: `rmdraw thumbs <uuid> -o out/x-thumbs [--wait S] [--host H]`. It prints
+     each saved path, or exits non-zero with a one-line "no thumbnail yet" message.
+   - Python: `rmdraw.device.fetch_thumbnails(doc_uuid, out_dir, host="root@10.11.99.1",
+     wait_s=10) -> list[Path]`, which returns `[]` if none appeared within `wait_s`.
+   - **Thumbnail timing [device]:** sometimes a thumbnail appears within about 10 s,
+     sometimes it takes over 40 s, and sometimes only after the notebook is opened on
+     the tablet. Often only page 1 gets one. If none comes, ask the user to open the
+     notebook (and flip through the pages), then retry with `rmdraw thumbs <uuid> -o DIR --wait 60`.
 4. `.venv/bin/pytest -q` before committing library changes.
 
 ## The device
@@ -268,8 +290,9 @@ skill or format-notes update. Keep the facts tagged.
   sample writer leaves it out. `rmdraw.rmwriter` writes it, so don't hand-roll scenes.
 - **x is centred** in device units (0 = page middle). In rmdraw you work in mm from
   the top-left, and the conversion is done for you. Watch it when reading dumps.
-- **White is a gap, not paint.** White fills draw nothing (they hide what's below).
-  A white pen line on colour is just a white stroke. Use white fills to cut holes.
+- **White is a gap, not paint.** White fills draw nothing (they hide what's below), but
+  the item's outline is still drawn in its `color` (default black). A white pen line on
+  colour is just a white stroke. Use white fills to cut holes.
 - **Descenders:** text `y` is the cap top. Letters like g, j, p, q, y reach about a third of
   `height` below the baseline. Leave room below text and above the page edge.
 - **150-stroke budget per object, enforced** (the outline counts). Dense fills, hatch
