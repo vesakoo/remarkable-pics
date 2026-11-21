@@ -13,5 +13,6 @@ out/*
 !out/drawings/
 !out/aws-icons/
 !out/calibration/
+!out/symbols/
 vendor/
 .DS_Store

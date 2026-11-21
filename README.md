@@ -38,6 +38,11 @@ flowchart LR
 The result: diagrams with clean, official-looking symbols and your own handwriting around
 them, made in minutes on the tablet.
 
+<p align="center">
+  <img src="out/drawings/aws-architecture/aws-architecture.png" width="60%" alt="A serverless web app architecture drawn with the AWS icons: CloudFront, S3, Cognito, API Gateway, Lambda, DynamoDB, CloudWatch">
+  <br><sub>A serverless web app sketched from the library: <a href="out/drawings/aws-architecture/aws-architecture.rmdoc">aws-architecture.rmdoc</a></sub>
+</p>
+
 ## ⭐ Ready now: 50 AWS architecture icons
 
 **[Download `aws-icons-top50.rmdoc`](out/aws-icons/aws-icons-top50.rmdoc)** and drag it into

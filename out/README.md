@@ -29,10 +29,27 @@ Source: [`examples/aws_icons.py`](../examples/aws_icons.py) with
 `vendor/aws-icons/`. The icons are © Amazon Web Services and are used under AWS's terms for
 architecture diagrams.
 
+## Quantum circuit symbols
+
+[`symbols/quantum-gates/quantum-gates.rmdoc`](symbols/quantum-gates/quantum-gates.rmdoc) · 8 pages.
+Page 1: single-qubit gate tiles (H X Y Z S T SX B I P, S† T† SX†, RX RY RZ U M, reset, barrier) and
+multi-qubit gates (CX, CZ, CCX/Toffoli, CXC, SWAP, CSWAP/Fredkin, iSWAP, √SWAP), plus loose control
+dots, targets and connectors to build any controlled gate. Page 2: kets and bras for
+0, 1, +, −, i+, i−, the Bell states β00–β11 and ready In/Out boxes. Pages 3–8: empty circuit
+templates for 1–6 qubits. Tiles are sized to the template wires, so lasso → copy → paste fits.
+
+| Gates | States | 3-qubit template |
+|---|---|---|
+| ![gates](symbols/quantum-gates/quantum-gates-p1.png) | ![states](symbols/quantum-gates/quantum-gates-p2.png) | ![circuit](symbols/quantum-gates/quantum-gates-p5.png) |
+
+Source: [`examples/quantum_gates.py`](../examples/quantum_gates.py)
+
 ## Drawings
 
 | | Notebook | Made from | Strokes |
 |---|---|---|---|
+| <img src="drawings/aws-architecture/aws-architecture.png" width="160"> | [aws-architecture.rmdoc](drawings/aws-architecture/aws-architecture.rmdoc) | [examples/aws_architecture.py](../examples/aws_architecture.py) | 1259 |
+| <img src="drawings/owl-coloring/owl-coloring.png" width="160"> | [owl-coloring.rmdoc](drawings/owl-coloring/owl-coloring.rmdoc) — a coloring page: outlines only, colour it in on the tablet | [examples/owl_coloring.json](../examples/owl_coloring.json) | 87 |
 | <img src="drawings/owl/owl.png" width="160"> | [owl.rmdoc](drawings/owl/owl.rmdoc) | [examples/owl.json](../examples/owl.json) | 799 |
 | <img src="drawings/fox/fox.png" width="160"> | [fox.rmdoc](drawings/fox/fox.rmdoc) · [on tablet](drawings/fox/tablet/fox-tablet.png) | [examples/fox.json](../examples/fox.json) | 235 |
 | <img src="drawings/smiley/smiley.png" width="160"> | [smiley.rmdoc](drawings/smiley/smiley.rmdoc) | [examples/smiley.json](../examples/smiley.json) | 175 |
@@ -52,6 +69,7 @@ Test pages used to learn how the tablet renders pens and fills.
 ```
 out/
 ├── aws-icons/      aws-icons-top50.rmdoc, page previews, tablet/
+├── symbols/        other symbol libraries (quantum-gates/)
 ├── drawings/<name>/<name>.rmdoc + <name>.png (+ tablet/)
 ├── calibration/    test notebooks
 └── *.*             anything loose here is scratch (git-ignored)
