@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rmdraw"
+version = "0.1.0"
+description = "Write native reMarkable Paper Pro notebooks (v6 .rm strokes)"
+requires-python = ">=3.12"
+dependencies = [
+    "rmscene==0.8.0",
+    "packaging>=23,<24",
+    "svgelements",
+    "shapely",
+    "Hershey-Fonts",
+]
+
+[project.optional-dependencies]
+dev = ["pytest<9"]
+
+[project.scripts]
+rmdraw = "rmdraw.cli:main"
+
+[tool.setuptools]
+packages = ["rmdraw"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

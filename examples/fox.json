@@ -1,0 +1,14 @@
+{"name":"Fox v2","pages":[[
+{"type":"polyline","closed":true,"width_mm":0.8,"fill":{"color":"#ff5a00"},
+ "points":[[45,30],[68,74],[112,74],[135,30],[147,100],[160,135],[90,205],[20,135],[33,100]]},
+{"type":"polyline","closed":true,"fill":{"color":"black"},"points":[[46,43],[41,70],[61,70]]},
+{"type":"polyline","closed":true,"fill":{"color":"black"},"points":[[134,43],[139,70],[119,70]]},
+{"type":"polyline","closed":true,"width_mm":0.6,"fill":{"color":"white"},
+ "points":[[28,136],[50,126],[75,140],[90,132],[105,140],[130,126],[152,136],[90,196]]},
+{"type":"ellipse","cx":66,"cy":108,"rx":5,"ry":7,"rotation_deg":-15,"fill":{"color":"black"}},
+{"type":"ellipse","cx":114,"cy":108,"rx":5,"ry":7,"rotation_deg":15,"fill":{"color":"black"}},
+{"type":"polyline","closed":true,"fill":{"color":"black"},"points":[[79,172],[101,172],[90,187]]},
+{"type":"polyline","width_mm":0.6,"points":[[90,187],[90,192]]},
+{"type":"polyline","width_mm":0.5,"points":[[66,92],[80,96]]},
+{"type":"polyline","width_mm":0.5,"points":[[114,92],[100,96]]}
+]]}
