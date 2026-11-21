@@ -109,6 +109,17 @@ This means the shader takes **arbitrary ARGB**. That's the best candidate for AW
 - RM-CALIBRATION showed shader fills at alpha 170 look washed out; alpha 230 looks solid. `palette.FILL_ALPHA` is 230.
 - Of the spacing/inset variants, shader spacing 1.2 mm with the quarter inset (band edge inset by width/4) gave the most solid icon, at ~36 strokes. These are the `shapes_to_strokes` defaults.
 
+## Fox v1 on the device (photo, 2026-11-21) [device]
+
+- Shader bands with round caps overshooting the edge by ~width/4 are clearly visible: a
+  dashed/wavy border on white gaps and saw-tooth slanted edges. Fixed by the "contour"
+  fill (`rmdraw/fill.py`): nothing is painted outside the shape.
+- 1.2 mm bands with overlap 1.25 show as visible horizontal stripes on large areas.
+  Spacing/overlap swatches are on page 2 of "Fox v2" (uuid 5787c77a-…); pending the
+  user's pick.
+- Acute corners (ear tips, ellipse ends) were left white; contour fill adds spurs.
+- `#e8740c` rendered tan; stronger oranges are on the swatch page.
+
 ## Open questions for calibration
 
 - Answered: pens ignore rgba; shader honours it (see the import test above).

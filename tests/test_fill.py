@@ -50,12 +50,65 @@ def test_shader_fill_default():
     for s in f:
         assert s.pen == "shader"
         assert s.rgba == (255, 153, 0, 230)
-        assert s.width_mm == pytest.approx(1.5)  # default spacing 1.2 x overlap 1.25
-        for p in s.points:
-            assert sq.contains(Point(p))
-        # default inset is a quarter of the band width
-        for p in s.points:
-            assert sq.exterior.distance(Point(p)) >= 0.375 - 1e-6
+        assert s.width_mm <= 1.5 + 1e-9  # default spacing 1.2 x overlap 1.25
+    assert any(s.width_mm == pytest.approx(1.5) for s in f)
+    _assert_contained(f, sq)
+
+
+def _ink(strokes):
+    from shapely.geometry import LineString
+    from shapely.ops import unary_union
+    parts = []
+    for s in strokes:
+        g = LineString(s.points) if len(s.points) > 1 else Point(s.points[0])
+        parts.append(g.buffer(s.width_mm / 2, quad_segs=8))
+    return unary_union(parts)
+
+
+def _assert_contained(strokes, area, tol=1e-3):
+    from shapely.geometry import LineString
+    grown = area.buffer(tol)
+    for s in strokes:
+        g = LineString(s.points) if len(s.points) > 1 else Point(s.points[0])
+        assert grown.contains(g.buffer(s.width_mm / 2, quad_segs=8)), s
+
+
+TRIANGLE = [(0, 0), (40, 0), (20, 75), (0, 0)]  # ~30 degree tip
+
+
+@pytest.mark.parametrize("ring", [square(0, 0, 20), TRIANGLE, circle(20, 20, 9)])
+def test_contour_fill_stays_inside_and_covers(ring):
+    area = Polygon(ring)
+    f = fills(shapes_to_strokes([FilledShape([ring], ORANGE, None)], budget=1000))
+    _assert_contained(f, area)
+    assert _ink(f).intersection(area).area >= 0.985 * area.area
+
+
+def test_contour_fill_with_hole_keeps_hole_clean():
+    outer, hole = square(0, 0, 30), square(10, 10, 10, ccw=False)
+    area = Polygon(outer, [hole[:-1]])
+    f = fills(shapes_to_strokes([FilledShape([outer, hole], ORANGE, None)], budget=1000))
+    _assert_contained(f, area)
+    assert _ink(f).intersection(area).area >= 0.985 * area.area
+
+
+def test_acute_corner_gets_spurs():
+    f = fills(shapes_to_strokes([FilledShape([TRIANGLE], ORANGE, None)], budget=1000))
+    assert any(s.width_mm < 1.5 / 2 + 1e-9 for s in f)
+    tip = Point(20, 75)
+    assert min(tip.distance(Point(p)) for s in f for p in s.points) < 2.0
+
+
+def test_thin_shape_uses_thinner_stroke():
+    strip = [(0, 0), (30, 0), (30, 1), (0, 1), (0, 0)]
+    f = fills(shapes_to_strokes([FilledShape([strip], ORANGE, None)], budget=1000))
+    assert f and all(s.width_mm < 1.0 for s in f)
+    _assert_contained(f, Polygon(strip))
+
+
+def test_overlap_below_one_rejected():
+    with pytest.raises(ValueError):
+        shapes_to_strokes([FilledShape([square(0, 0, 5)], ORANGE, None)], overlap=0.9)
 
 
 def test_marker_fill_uses_palette():

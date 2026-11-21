@@ -112,6 +112,15 @@ brown, orange, skin tones and pastels work), or the names
 `black gray blue red green yellow cyan magenta white`. **Near-white counts as white:** a
 fill whose R, G and B are **all ≥ 230** draws nothing (it's a gap, like `white`). Pastels
 need at least one channel below 230 (e.g. `#ffd8a8`, not `#fff0e0`).
+**Colours look muted on the tablet:** `#e8740c` came out tan on the device. Pick
+saturated colours one step stronger than you would on screen (fox orange: `#ff5a00`).
+**[device]** for the tan; the stronger orange is [unverified] until the user reports
+back on the "Fox v2" swatch page.
+
+**Parts that sit on a parent shape must lie inside it.** Inner ears, eyes, patches,
+logos on a body: check every vertex against the parent's edges before building (at a
+given y, compute the parent edge's x by linear interpolation). A detail poking past its
+parent reads as a cut-out notch on the tablet. Fox v1's inner ears did exactly that.
 
 **Pens, by job:**
 - `fineliner`: outlines, details and text. Uniform width. Default 0.4 mm; 0.6–1.2 mm
@@ -123,7 +132,9 @@ need at least one channel below 230 (e.g. `#ffd8a8`, not `#fff0e0`).
 - `pencil` / `mechanical_pencil` / `ballpoint` / `calligraphy` / `paintbrush`:
   textured lines. Pick them for sketchy styles.
 
-**Fill methods:** `shader` (default; solid-looking, exact colour, bands 1.2 mm apart),
+**Fill methods:** `shader` (default; solid-looking, exact colour, bands 1.2 mm apart;
+the default "contour" fill keeps every stroke, round ends included, inside the shape: a
+contour stroke along each edge, bands inside it, thin spurs into sharp corners),
 `marker` (palette colour, wider bands), `hatch` (thin 45° fineliner lines; a pen-drawn
 look). The outline is drawn separately in the item's own pen, colour and width. A
 yellow face with a black outline is `color: "black"` plus `fill: {color: "yellow"}`.
@@ -313,6 +324,9 @@ skill or format-notes update. Keep the facts tagged.
   at small spacing and very detailed SVGs blow it, and the build then fails. Widen
   `spacing_mm`, fill fewer areas, or simplify. Pages
   above a few thousand strokes get sluggish to open and lasso.
+- **Old fills overshoot.** `inset="quarter"`/`"half"`/`"outer"` (used by fill code from before
+  2026-11-21) let the round shader caps poke ~0.4 mm past the edge: wavy borders on white
+  gaps and jagged slanted edges on the device. The default `"contour"` does not.
 - Off-page points are an error. Keep 10 mm margins; scaled SVGs can spill.
 - Arcs go clockwise in screen space (y down). A "frown" is 205 → 335.
 - **`.remarkable` holds a secret. Never read or print it.**
