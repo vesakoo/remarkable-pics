@@ -2,7 +2,7 @@ from rmdraw.palette import AWS_CATEGORY_COLORS, FILL_ALPHA, to_pen_color
 
 
 def test_fill_alpha_constant():
-    assert FILL_ALPHA == 170
+    assert FILL_ALPHA == 230
 
 
 def test_aws_orange_maps_to_category_color():
@@ -10,7 +10,7 @@ def test_aws_orange_maps_to_category_color():
 
 
 def test_aws_orange_keeps_rgba():
-    assert to_pen_color((255, 153, 0))[1] == (255, 153, 0, 170)
+    assert to_pen_color((255, 153, 0))[1] == (255, 153, 0, 230)
 
 
 def test_nearest_palette_colour():

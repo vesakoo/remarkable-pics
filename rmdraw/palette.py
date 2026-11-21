@@ -1,8 +1,8 @@
 """Map arbitrary RGB to the device's pen palette (pens ignore rgba) and to shader rgba."""
 from __future__ import annotations
 
-# Alpha used for shader fills (the shader honours arbitrary RGBA on the device).
-FILL_ALPHA = 170
+# Alpha used for shader fills (the shader honours arbitrary RGBA; 230 from RM-CALIBRATION).
+FILL_ALPHA = 230
 
 # Reference RGBs for the palette colours that pens can render. White is never chosen.
 PALETTE_RGB: dict[str, tuple[int, int, int]] = {

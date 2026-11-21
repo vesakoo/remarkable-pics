@@ -46,16 +46,16 @@ def test_shader_fill_default():
     sq = Polygon(square(10, 10, 20))
     out = shapes_to_strokes([FilledShape([square(10, 10, 20)], ORANGE, None)])
     f = fills(out)
-    assert len(f) >= 8
+    assert len(f) >= 14
     for s in f:
         assert s.pen == "shader"
-        assert s.rgba == (255, 153, 0, 170)
-        assert s.width_mm == pytest.approx(2.5)
+        assert s.rgba == (255, 153, 0, 230)
+        assert s.width_mm == pytest.approx(1.5)  # default spacing 1.2 x overlap 1.25
         for p in s.points:
             assert sq.contains(Point(p))
-        # band inset by half its width
+        # default inset is a quarter of the band width
         for p in s.points:
-            assert sq.exterior.distance(Point(p)) >= 1.25 - 1e-6
+            assert sq.exterior.distance(Point(p)) >= 0.375 - 1e-6
 
 
 def test_marker_fill_uses_palette():
@@ -160,7 +160,7 @@ def test_budget_enforced():
 
 def test_budget_impossible_raises():
     shapes = [FilledShape([square(i * 3, 0, 2)], (0, 0, 0), None) for i in range(50)]
-    with pytest.raises(ValueError, match="50"):
+    with pytest.raises(ValueError, match="exceed the budget of 10"):
         shapes_to_strokes(shapes, budget=10)
 
 

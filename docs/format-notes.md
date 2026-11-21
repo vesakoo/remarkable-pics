@@ -103,6 +103,11 @@ This means the shader takes **arbitrary ARGB**. That's the best candidate for AW
 - Highlighter HIGHLIGHT_ORANGE (15) renders orange, with a square-ended band.
 - Consequence for fills: use the shader with exact rgba for coloured areas. Use palette pens for outlines and text.
 
+## Fill defaults [device]
+
+- RM-CALIBRATION showed shader fills at alpha 170 look washed out; alpha 230 looks solid. `palette.FILL_ALPHA` is 230.
+- Of the spacing/inset variants, shader spacing 1.2 mm with the quarter inset (band edge inset by width/4) gave the most solid icon, at ~36 strokes. These are the `shapes_to_strokes` defaults.
+
 ## Open questions for calibration
 
 - Answered: pens ignore rgba; shader honours it (see the import test above).

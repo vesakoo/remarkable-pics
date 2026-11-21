@@ -19,7 +19,7 @@ BAND_OVERLAP = 1.25
 MIN_BAND_MM = 0.5
 MIN_RING_AREA_MM2 = 1.0
 SIMPLIFY_MM = 0.2
-DEFAULT_SPACING = {"shader": 2.0, "marker": 2.0, "hatch": 1.2}
+DEFAULT_SPACING = {"shader": 1.2, "marker": 2.0, "hatch": 1.2}
 EMPTY = Polygon()
 
 
@@ -229,13 +229,13 @@ def shapes_to_strokes(
     spacing_mm: float | None = None,
     budget: int = 150,
     category: str | None = None,
-    inset: str = "half",
+    inset: str = "quarter",
 ) -> list[Stroke]:
     """Convert shapes (in paint order) to fill strokes followed by outline strokes.
 
     Over budget: widen spacing in 25% steps up to 2x, then drop rings < 1 mm^2,
     then simplify outlines at 0.2 mm; raise ValueError if still over.
-    inset: "half" (band edge inset by width/2), "quarter" (width/4), or "outer" (only the
+    inset: "quarter" (default; band edge inset by width/4), "half" (width/2), or "outer" (only the
     exterior boundary is inset by width/2; holes keep their true edge).
     """
     if inset not in ("half", "quarter", "outer"):
