@@ -31,7 +31,7 @@ from rmdraw.shapes_json import load  # noqa: E402
 
 OUT = ROOT / "out"
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-DRAWINGS = ("owl", "fox", "smiley", "tree")
+DRAWINGS = ("owl", "owl_coloring", "fox", "smiley", "tree")
 
 
 def png(rmdoc: Path, page: int, dest: Path, scale: float = 1.5) -> None:
@@ -66,7 +66,8 @@ def main() -> None:
     a = ap.parse_args()
 
     for name in DRAWINGS:
-        publish(load(ROOT / "examples" / f"{name}.json"), OUT / "drawings" / name, name)
+        slug = name.replace("_", "-")
+        publish(load(ROOT / "examples" / f"{name}.json"), OUT / "drawings" / slug, slug)
 
     if not a.skip_aws:
         import aws_icons
