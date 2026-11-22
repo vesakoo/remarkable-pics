@@ -15,14 +15,19 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "examples"))
 
 from quantum_gates import glyphs, shift  # noqa: E402
-from rmdraw.model import Document, Stroke  # noqa: E402
-from rmdraw.shapes_json import from_dict  # noqa: E402
+from rmdraw.model import Document, Page, Stroke  # noqa: E402
+from shapely.geometry import Polygon  # noqa: E402
+
+from rmdraw.fill import _contour_fill, shapes_to_strokes  # noqa: E402
+from rmdraw.svgimport import FilledShape  # noqa: E402
 
 NAME = "Presentation doodles"
 # accent fills, one step stronger than on screen (the tablet mutes colours)
 YEL, BLU, RED, GRN, ORG = "#ffc400", "#5f9dff", "#ff4f4f", "#3fbf5a", "#ff7a00"
 PBLU, PYEL, PGRN, PRED, PORG = "#b9d4ff", "#ffe066", "#9fe0aa", "#ff9b9b", "#ffc98a"
-DRED, GRY = "#c62828", "#a8a8a8"
+DRED, GRY, DARK, LGRY = "#c62828", "#a8a8a8", "#3a3a3a", "#d6d6d6"
+BASE_SPACING, BASE_WIDTH = 1.4, 1.75   # white-pen base under every fill
+STATS = []                             # strokes per filled shape (budget check)
 
 
 # ---- geometry ----------------------------------------------------------------------------
@@ -144,7 +149,7 @@ class D:
     def T(self, pts):
         return [(self.ox + self.k * x, self.oy + self.k * y) for x, y in pts]
 
-    def ink(self, pts, w=0.5, color="black", closed=False, wobble=0.2, pen="fineliner"):
+    def ink(self, pts, w=0.5, color="black", closed=False, wobble=0.15, pen="fineliner"):
         pts = self.T(pts)
         if closed:
             pts = pts + [pts[0]]
@@ -154,15 +159,26 @@ class D:
             self.n += 1
         self.strokes.append(Stroke(pts, pen=pen, color=color, width_mm=w))
 
-    def fill(self, pts, color):
-        self.items.append({"type": "polyline", "closed": True, "outline": False,
-                           "points": [[round(x, 3), round(y, 3)] for x, y in self.T(pts)],
-                           "fill": {"color": color}})
+    def fill(self, pts, color="white"):
+        """Solid fill, no outline: an opaque white-pen base (so nothing below shows through,
+        also on the tablet after lasso-copying) with the shader colour on top."""
+        ring = self.T(pts)
+        poly = Polygon(ring).buffer(0).buffer(0.15, join_style=2)  # reach under the wobbly outline
+        if poly.is_empty:
+            return
+        n0 = len(self.strokes)
+        for seg, w in _contour_fill(poly, BASE_SPACING, BASE_WIDTH, 0.0):
+            self.strokes.append(Stroke([tuple(q) for q in seg.coords], color="white", width_mm=w))
+        if color != "white":
+            rgb = tuple(int(color[i:i + 2], 16) for i in (1, 3, 5))
+            self.strokes += shapes_to_strokes([FilledShape([ring + [ring[0]]], rgb, None)],
+                                              method="shader", outlines=False, budget=400)
+        STATS.append(len(self.strokes) - n0)
 
-    def shape(self, pts, fill=None, w=0.5, color="black"):
-        if fill:
-            self.fill(pts, fill)
-        self.ink(pts, w, color, closed=True)
+    def shape(self, pts, fill="white", w=0.5, color="black", wobble=0.12):
+        """Solid filled shape with an outline (fill None means white)."""
+        self.fill(pts, fill or "white")
+        self.ink(pts, w, color, closed=True, wobble=wobble)
 
     def dot(self, x, y, w=1.0, color="black"):
         (x, y), = self.T([(x, y)])
@@ -202,7 +218,7 @@ class D:
         self.strokes += shift(st, x + dx, y)
 
     def page(self):
-        return self.items, self.strokes
+        return [], self.strokes
 
 
 def caption(d, s, x, y):
@@ -284,7 +300,7 @@ def person(d, arms, legs=STAND, body=BLU, mood="smile", look=(0.0, 0.0)):
     """Sketchnote person in local coords: head top about y=-17, feet at y=12."""
     torso = smooth([(-2.8, -8.8), (2.8, -8.8), (4.0, 2.4), (-4.0, 2.4)], 2)
     d.shape(torso, body)
-    d.ink(arc(0, -13.4, 3.6), closed=True)
+    d.shape(arc(0, -13.4, 3.6))
     face(d, 0, -13.4, 3.6, mood, look)
     for s, spec in zip(((2.5, -7.9), (-2.5, -7.9)), arms):
         d.ink(_limb(s, spec, 5.0, 4.6), 0.6)
@@ -343,7 +359,7 @@ def page_people():
     for i, m in enumerate(moods):
         cx = 20 + i * 23.3
         d.at(cx, 207)
-        d.ink(arc(0, 0, 8.5), 0.55, closed=True)
+        d.shape(arc(0, 0, 8.5), w=0.55)
         face(d, 0, 0, 8.5, m)
         caption(d, {"flat": "meh"}.get(m, m), cx, 219)
     return d.page()
@@ -373,7 +389,7 @@ def desk():
     d.ink([(15, 3), (15, 12)], 0.6)
     # person behind the desk (upper body only)
     d.shape([(-9.4, -8.8), (-3.8, -8.8), (-2.8, 0), (-10.4, 0)], BLU)
-    d.ink(arc(-6.6, -13.4, 3.6), closed=True)
+    d.shape(arc(-6.6, -13.4, 3.6))
     face(d, -6.6, -13.4, 3.6, "smile", (0.12, 0.08))
     d.ink([(-4.2, -7.8), (-1.0, -3.2), (4.0, -1.0)], 0.6)
     d.ink([(-9.0, -7.8), (-10.6, -3.0), (-7.0, -0.8)], 0.6)
@@ -390,234 +406,6 @@ def team():
         d.at(cx + dx, cy + 12 * (1 - k), k)
         person(d, ((70, 95), (110, 85)), body=c, mood=m)
     d.at(cx, cy)
-
-
-# ---- arrows ---------------------------------------------------------------------------------
-def page_arrows():
-    d = D()
-    title(d, "Arrows", "connect ideas: lasso an arrow, rotate and stretch it")
-    cols, rows = (30, 70, 110, 150), (46, 85, 124, 163, 202)
-
-    def straight():
-        d.arrow([(-14, 0), (14, 0)])
-
-    def curved():
-        d.arrow(bez((-14, 6), (-6, -13), (6, -13), (14, 6)))
-
-    def s_curve():
-        d.arrow(bez((-14, -6), (-2, -14), (2, 14), (14, 6)))
-
-    def zigzag():
-        d.arrow([(-14, -6), (-7, 6), (-1, -5), (6, 7), (14, -5)])
-
-    def loop():
-        pts = []
-        for i in range(81):
-            t = i / 80
-            pts.append((-14 + 28 * t + 7 * math.sin(2 * math.pi * t), 5 - 11 * math.sin(math.pi * t) ** 2))
-        d.arrow(pts)
-
-    def double():
-        d.arrow([(-14, 0), (14, 0)], both=True)
-
-    def u_turn():
-        d.arrow([(8, 9), (8, -1)] + arc(0, -1, 8, 0, -180)[1:] + [(-8, 9)])
-
-    def cycle():
-        for i in range(3):
-            a0 = i * 120 - 80
-            pts = arc(0, 0, 9, a0, a0 + 92, step=4)
-            d.ink(pts)
-            arc_arrow_head(d, pts, 2.4)
-
-    def block():
-        d.shape([(-14, -4), (3, -4), (3, -9.5), (14, 0), (3, 9.5), (3, 4), (-14, 4)], ORG, 0.6)
-
-    def dashed():
-        pts = bez((-14, -6), (-4, 10), (4, 10), (14, -6))
-        d.dashed(pts)
-        arc_arrow_head(d, pts)
-
-    def branch():
-        d.ink([(-14, 0), (-5, 0)])
-        for y in (-9, 0, 9):
-            d.arrow(bez((-5, 0), (3, 0), (4, y), (14, y)))
-
-    def merge():
-        for y in (-9, 0, 9):
-            d.ink(bez((-14, y), (-4, y), (-3, 0), (5, 0)))
-        d.arrow([(5, 0), (14, 0)])
-
-    def spiral():
-        pts = []
-        for i in range(120):
-            th = i / 119 * 3.3 * math.pi
-            r = 0.6 + 2.7 * th / math.pi
-            pts.append((r * math.cos(th), r * math.sin(th) * 0.9))
-        d.arrow(pts)
-
-    def trend():
-        d.ink([(-13, -10), (-13, 8), (14, 8)], 0.4, "gray")
-        d.arrow([(-11, 5), (-5, -0.5), (0, 2), (6, -4), (12, -9)], 0.6, s=3)
-
-    def elbow():
-        d.arrow(smooth([(-14, -8), (0, -8), (0, 8), (14, 8)], 3, closed=False))
-
-    def bounce():
-        pts, x0 = [], -14
-        for x1, h in ((-3, 12), (6, 7), (12, 3.5)):
-            for i in range(1, 21):
-                t = i / 20
-                pts.append((x0 + (x1 - x0) * t, 7 - h * math.sin(math.pi * t)))
-            x0 = x1
-        d.arrow([(-14, 7)] + pts[:-1] + [(14.5, 6.4)])
-        d.ink([(-15, 8.5), (15, 8.5)], 0.35, "gray")
-
-    def exchange():
-        d.arrow([(-13, -3.5), (13, -3.5)])
-        d.arrow([(13, 3.5), (-13, 3.5)])
-
-    def burst():
-        for i in range(8):
-            a = math.radians(i * 45 + 22.5)
-            d.arrow([(3.5 * math.cos(a), 3.5 * math.sin(a)), (11 * math.cos(a), 11 * math.sin(a))], s=2.2)
-        d.shape(arc(0, 0, 2.2), YEL, 0.45)
-
-    def chevrons():
-        for x, c in ((-14, BLU), (-4.5, GRN), (5, ORG)):
-            d.shape([(x, -5.5), (x + 6, -5.5), (x + 9.5, 0), (x + 6, 5.5), (x, 5.5), (x + 3.5, 0)], c, 0.45)
-
-    def marker():
-        pts = bez((-14, 7), (-6, -10), (2, 12), (13, -6))
-        d.arrow(pts, 1.2, "red", s=3.4, pen="marker")
-
-    kinds = [("straight", straight), ("curved", curved), ("s-curve", s_curve), ("zigzag", zigzag),
-             ("loop", loop), ("two-way", double), ("u-turn", u_turn), ("cycle", cycle),
-             ("block", block), ("dashed", dashed), ("branch", branch), ("merge", merge),
-             ("spiral", spiral), ("growth", trend), ("elbow", elbow), ("bounce", bounce),
-             ("exchange", exchange), ("burst", burst), ("process", chevrons), ("marker", marker)]
-    for i, (name, fn) in enumerate(kinds):
-        cx, cy = cols[i % 4], rows[i // 4]
-        d.at(cx, cy)
-        fn()
-        caption(d, name, cx, cy + 13.5)
-    return d.page()
-
-
-# ---- speech bubbles & frames ------------------------------------------------------------------
-def ell_bubble(cx, cy, rx, ry, g0, g1, tip):
-    return arc(cx, cy, rx, g1, g0 + 360, ry, step=5) + [tip]
-
-
-def page_bubbles():
-    d = D()
-    title(d, "Bubbles & frames", "write inside them - or lasso and resize")
-    cols, rows = (33, 90, 147), (50, 94, 138, 182)
-
-    def speech():
-        d.shape(ell_bubble(0, -3, 19, 11.5, 105, 122, (-13, 13)), PBLU, 0.55)
-
-    def box_speech():
-        r, x0, y0, x1, y1 = 4, -19, -13, 19, 7
-        pts = (arc(x1 - r, y0 + r, r, -90, 0) + arc(x1 - r, y1 - r, r, 0, 90)
-               + [(-6, y1), (-14, 14), (-11, y1)]
-               + arc(x0 + r, y1 - r, r, 90, 180) + arc(x0 + r, y0 + r, r, 180, 270))
-        d.shape(pts, None, 0.55)
-
-    def thought():
-        d.shape(bumps(arc(2, -4, 17, 0, 324, 9.5, step=36), 0.32), None, 0.5)
-        d.shape(arc(-12, 9, 2.2), None, 0.45)
-        d.shape(arc(-16, 13.5, 1.3), None, 0.45)
-
-    def shout():
-        pts = star(19, 13, 9, rot=-80, rx=1.05)
-        pts = [(x, y * 0.72) for x, y in pts]
-        d.shape(pts, YEL, 0.6)
-
-    def whisper():
-        pts = ell_bubble(0, -3, 19, 11.5, 60, 78, (13, 13))
-        d.dashed(pts + [pts[0]], 0.45)
-
-    def dialogue():
-        d.shape(ell_bubble(-8, -6, 11, 7, 110, 132, (-16, 5)), PBLU, 0.5)
-        d.shape(ell_bubble(9, 7, 11, 7, 48, 70, (18, 16)), PORG, 0.5)
-
-    def banner():
-        for s in (-1, 1):
-            m = lambda pts: [(s * x, y) for x, y in pts]
-            d.fill(m([(-18, -2), (-26, -2), (-23, 3), (-26, 8), (-14, 8), (-14, 4), (-18, 4)]), DRED)
-            d.fill(m([(-18, 4), (-14, 4), (-14, 8)]), "#7a1010")
-            d.ink(m([(-18, -2), (-26, -2), (-23, 3), (-26, 8), (-14, 8), (-14, 4)]), 0.5)
-            d.ink(m([(-18, 4), (-14, 8)]), 0.4)
-        d.shape([(-18, -7), (18, -7), (18, 4), (-18, 4)], RED, 0.55)
-
-    def sticky():
-        note = rot([(-14, -14), (14, -14), (14, 8), (8, 14), (-14, 14)], -4)
-        d.shape(note, PYEL, 0.5)
-        fold = rot([(14, 8), (8, 14), (8, 8)], -4)
-        d.shape(fold, YEL, 0.4)
-        d.fill(rot([(-6, -17), (6, -17), (6, -11), (-6, -11)], 3), "#cfcfcf")
-        d.ink(rot([(-6, -17), (6, -17), (6, -11), (-6, -11)], 3), 0.3, "gray", closed=True)
-
-    def frame():
-        d.ink([(-20, -11), (20, -11), (20, 11), (-20, 11)], 0.6, closed=True)
-        d.ink([(-18.2, -9.2), (18.2, -9.2), (18.2, 9.2), (-18.2, 9.2)], 0.3, closed=True)
-        for x in (-20, 20):
-            for y in (-11, 11):
-                d.shape([(x, y - 2), (x + 2, y), (x, y + 2), (x - 2, y)], BLU, 0.4)
-
-    def scroll():
-        d.fill([(-14, -10), (14, -10), (14, 10), (-14, 10)], "#ffe2a8")
-        for s in (-1, 1):
-            d.shape(arc(s * 15, 0, 2.5, 0, 360, 11), "#e8b86a", 0.5)
-        d.ink([(-13.96, -10), (13.96, -10)], 0.5)
-        d.ink([(-13.96, 10), (13.96, 10)], 0.5)
-
-    def tag():
-        d.shape([(-18, 0), (-11, -9), (18, -9), (18, 9), (-11, 9)], PGRN, 0.55)
-        d.shape(arc(-11, 0, 1.7), "white", 0.45)
-        d.ink(bez((-11, 0), (-16, -6), (-20, -2), (-21, -10)), 0.4)
-
-    def badges():
-        for y, c, n in ((-10, BLU, "1"), (0, ORG, "2"), (10, GRN, "3")):
-            d.shape(arc(-14, y, 4), c, 0.5)
-            d.text(n, -14, y - 2.3, 4.6, w=0.45, hand=False)
-            d.ink([(-7, y), (19, y)], 0.35, "gray")
-
-    kinds = [("speech", speech), ("speech box", box_speech), ("thought", thought),
-             ("shout", shout), ("whisper", whisper), ("dialogue", dialogue),
-             ("banner", banner), ("sticky note", sticky), ("title frame", frame),
-             ("scroll", scroll), ("tag", tag), ("numbered list", badges)]
-    for i, (name, fn) in enumerate(kinds):
-        cx, cy = cols[i % 3], rows[i // 3]
-        d.at(cx, cy)
-        fn()
-        caption(d, name, cx, cy + 17.5)
-
-    # emphasis row
-    y = 214
-    d.at(33, y)
-    d.ink([(-17, 0), (17, 0)], 5.0, "hl_yellow", pen="highlighter", wobble=0)
-    d.ink(bez((-18, 5), (-6, 3.5), (6, 4), (18, 3), n=20), 0.7)
-    d.ink(bez((-18, 7.5), (-8, 6.5), (4, 7), (12, 6.3), n=20), 0.4)
-    caption(d, "highlight & underline", 33, y + 10)
-    d.at(90, y)
-    d.ink(bez((-12, -7), (-15, -7), (-12, 0), (-16, 0)) + bez((-16, 0), (-12, 0), (-15, 7), (-12, 7))[1:], 0.55)
-    d.ink(bez((12, -7), (15, -7), (12, 0), (16, 0)) + bez((16, 0), (12, 0), (15, 7), (12, 7))[1:], 0.55)
-    d.ink([(-5, -7), (-7, -7), (-7, 7), (-5, 7)], 0.55)
-    d.ink([(5, -7), (7, -7), (7, 7), (5, 7)], 0.55)
-    caption(d, "braces & brackets", 90, y + 10)
-    d.at(147, y)
-    d.ink([(-20, -4), (-3, -4)], 0.45)
-    d.ink([(3, -4), (20, -4)], 0.45)
-    d.shape([(0, -6.5), (2.5, -4), (0, -1.5), (-2.5, -4)], BLU, 0.4)
-    for i in range(9):
-        d.dot(-16 + i * 4, 2, 0.9)
-    for i in range(5):
-        d.at(147 - 12 + i * 6, y + 6.5, 0.22)
-        d.shape(star(10, 4.2), YEL, 0.3)
-    caption(d, "dividers", 147, y + 10)
-    return d.page()
 
 
 # ---- idea icons -------------------------------------------------------------------------------
@@ -681,7 +469,7 @@ def page_icons():
         d.ink([(2.6, 2.6), (9, 9)], 2.0, wobble=0)
 
     def clock():
-        d.ink(arc(0, 0, 9.5), 0.55, closed=True)
+        d.shape(arc(0, 0, 9.5), w=0.55)
         for i in range(12):
             a = math.radians(i * 30)
             r0 = 7.4 if i % 3 else 6.6
@@ -826,10 +614,12 @@ def page_icons():
 
 
 def build() -> Document:
-    pages = [page_people(), page_arrows(), page_bubbles(), page_icons()]
-    doc = from_dict({"name": NAME, "pages": [items for items, _ in pages]})
-    for page, (_, strokes) in zip(doc.pages, pages):
-        page.strokes.extend(strokes)
+    import doodle_pages as dp
+    pages = [page_people(), dp.page_arrows(), dp.page_bubbles(), dp.page_notes(),
+             dp.page_labels(), dp.page_shapes(), page_icons()]
+    doc = Document(NAME, [Page(strokes) for _, strokes in pages])
+    if max(STATS) > 150:
+        print(f"warning: a filled shape uses {max(STATS)} strokes (> 150)")
     return doc
 
 

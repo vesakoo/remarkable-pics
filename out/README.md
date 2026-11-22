@@ -49,19 +49,30 @@ Source: [`examples/quantum_gates.py`](../examples/quantum_gates.py)
 
 ## Presentation doodles
 
-[`symbols/doodles/doodles.rmdoc`](symbols/doodles/doodles.rmdoc) · 4 pages · sketchnote style with
-a light hand-drawn wobble. Page 1: people (standing, waving, cheering, pointing, thinking,
-shrugging, walking, big idea, question, presenting, at the desk, team) and seven faces. Page 2:
-20 arrows (curved, loop, cycle, block, branch/merge, spiral, growth, process chevrons, marker…).
-Page 3: speech, thought, shout and whisper bubbles, dialogue, banner, sticky note, frames, scroll,
-tag, numbered list, highlights, braces and dividers. Page 4: 30 idea icons (light bulb, gear,
-rocket, target, trophy, chart, calendar, lock, flag, puzzle, globe, megaphone, hourglass…).
+[`symbols/doodles/doodles.rmdoc`](symbols/doodles/doodles.rmdoc) · 7 pages · sketchnote style.
+Every filled element is **solid**: an opaque white-pen base under the colour, so a lassoed
+bubble, label or arrow covers whatever it is pasted onto and you can write on it.
 
-| People | Arrows | Bubbles & frames | Idea icons |
+1. People: 12 poses and scenes, plus 7 faces
+2. Arrows: 20 thick arrows to write in (block, notched, fishtail, curved, u-turn, cycle, refresh,
+   growth, swoosh, elbow, 3d, four-way, striped, exchange, process, step, callout, level up…)
+3. Speech bubbles: oval, cloud, thought, box, tilted, shout, phone, dialogue, whisper, round,
+   framed, scalloped, wide, double line
+4. Sticky notes: taped, folded corner, paper clip, checklist, clipboard, pinned stack, sticky,
+   notebook page, index card
+5. Labels & banners: banner, wavy and arched ribbons, rosette, tag, pennant, plaque, badge,
+   seal, scroll bar, stitched, arch
+6. Shapes: 20 solid blocks for diagrams, plus a full-width bar
+7. Idea icons: 30 icons
+
+| People | Arrows | Bubbles | Notes |
 |---|---|---|---|
-| ![people](symbols/doodles/doodles-p1.png) | ![arrows](symbols/doodles/doodles-p2.png) | ![bubbles](symbols/doodles/doodles-p3.png) | ![icons](symbols/doodles/doodles-p4.png) |
+| ![people](symbols/doodles/doodles-p1.png) | ![arrows](symbols/doodles/doodles-p2.png) | ![bubbles](symbols/doodles/doodles-p3.png) | ![notes](symbols/doodles/doodles-p4.png) |
+| **Labels & banners** | **Shapes** | **Idea icons** | |
+| ![labels](symbols/doodles/doodles-p5.png) | ![shapes](symbols/doodles/doodles-p6.png) | ![icons](symbols/doodles/doodles-p7.png) | |
 
-Source: [`examples/doodles.py`](../examples/doodles.py)
+Source: [`examples/doodles.py`](../examples/doodles.py) and
+[`examples/doodle_pages.py`](../examples/doodle_pages.py)
 
 ## Drawings
 
