@@ -39,7 +39,8 @@ dots, targets and connectors to build any controlled gate. Pages 2–5: gate mat
 0, 1, +, −, i+, i−, the Bell states β00–β11 and ready In/Out boxes. Pages 7–8: state vectors (one qubit, general |ψ⟩, two-qubit basis,
 Bell states). Page 9: six Bloch spheres
 from different angles, state vector left empty to draw by hand. Pages 10–15: empty circuit
-templates for 1–6 qubits. Tiles are sized to the template wires, so lasso → copy → paste fits.
+templates for 1–6 qubits: In boxes, a Measured column for the classical bits, and a separate
+“Output state” field for the quantum state |ψ_out⟩ before measurement. Tiles are sized to the template wires, so lasso → copy → paste fits.
 
 | Gates | Gate matrices | States | Bloch spheres | 3-qubit template |
 |---|---|---|---|---|

@@ -504,9 +504,11 @@ STEPS = 6
 def page_circuit(n):
     p = Ink()
     p.text(f"Circuit - {n} qubit{'s' if n > 1 else ''}", 90, 10, 5.5, align="center", width=0.55)
-    p.text("Write the input state in each In box, paste gates on the wires, "
-           "read results into Out.", 90, 18, 2.3, align="center", color="gray")
-    top, head = 26.0, 12.0
+    p.text("In: input states.   Measured: classical bits (0 or 1) from the meters.", 90, 19.5,
+           2.2, align="center", color="gray")
+    p.text("Output state: the quantum state before measurement, written as an equation below.",
+           90, 23.5, 2.2, align="center", color="gray")
+    top, head = 29.5, 12.0
     bottom = top + head + n * ROW
     p.rect(X0, top, X1 - X0, bottom - top, fill=None, edge="gray", rx=0.0, width=0.4)
     for x in (XIN, XOUT):
@@ -518,7 +520,7 @@ def page_circuit(n):
     p.text("Step", XIN - 1.5, top + 1.8, 2.6, align="right", width=0.33)
     p.text("In", X0 + 1.5, top + head - 4.2, 2.6, width=0.33)
     p.text("Step", XOUT + 1.5, top + 1.8, 2.6, width=0.33)
-    p.text("Out", X1 - 1.5, top + head - 4.2, 2.6, align="right", width=0.33)
+    p.text("Measured", X1 - 1.2, top + head - 3.6, 2.2, align="right", width=0.3)
     step_w = (XOUT - XIN) / STEPS
     for s in range(STEPS):
         p.text(str(s + 1), XIN + step_w * (s + 0.5), top + 4.5, 3.0, align="center",
@@ -530,6 +532,15 @@ def page_circuit(n):
         p.line([(X0 + 27, y), (XOUT + 4, y)], 0.45)                                   # wire
         p.meter(XOUT + 10, y, w=10, h=8)
         p.rect(X1 - 12.5, y - 5, 10, 10, fill=None, edge="black", rx=0.8, width=0.45)  # Out box
+    # output state: the quantum state before measurement, written as an equation (hand-lettered)
+    y = bottom + 9
+    HAND[0] = True
+    p.text(["Output state (before measurement)"], X0, y, 3.4, width=0.38)
+    p.text([ket(("greek", "y"), ("sub", "out")), " ="], X0 + 2, y + 10, 4.6, width=0.45)
+    HAND[0] = False
+    for k in range(3):
+        ly = y + 15 + k * 12
+        p.line([(X0 + 22 if k == 0 else X0 + 2, ly), (X1, ly)], 0.25, "gray")
     return p.page()
 
 
