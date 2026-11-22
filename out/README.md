@@ -47,6 +47,22 @@ templates for 1–6 qubits. Tiles are sized to the template wires, so lasso → 
 
 Source: [`examples/quantum_gates.py`](../examples/quantum_gates.py)
 
+## Presentation doodles
+
+[`symbols/doodles/doodles.rmdoc`](symbols/doodles/doodles.rmdoc) · 4 pages · sketchnote style with
+a light hand-drawn wobble. Page 1: people (standing, waving, cheering, pointing, thinking,
+shrugging, walking, big idea, question, presenting, at the desk, team) and seven faces. Page 2:
+20 arrows (curved, loop, cycle, block, branch/merge, spiral, growth, process chevrons, marker…).
+Page 3: speech, thought, shout and whisper bubbles, dialogue, banner, sticky note, frames, scroll,
+tag, numbered list, highlights, braces and dividers. Page 4: 30 idea icons (light bulb, gear,
+rocket, target, trophy, chart, calendar, lock, flag, puzzle, globe, megaphone, hourglass…).
+
+| People | Arrows | Bubbles & frames | Idea icons |
+|---|---|---|---|
+| ![people](symbols/doodles/doodles-p1.png) | ![arrows](symbols/doodles/doodles-p2.png) | ![bubbles](symbols/doodles/doodles-p3.png) | ![icons](symbols/doodles/doodles-p4.png) |
+
+Source: [`examples/doodles.py`](../examples/doodles.py)
+
 ## Drawings
 
 | | Notebook | Made from | Strokes |
@@ -72,7 +88,7 @@ Test pages used to learn how the tablet renders pens and fills.
 ```
 out/
 ├── aws-icons/      aws-icons-top50.rmdoc, page previews, tablet/
-├── symbols/        other symbol libraries (quantum-gates/)
+├── symbols/        other symbol libraries (quantum-gates/, doodles/)
 ├── drawings/<name>/<name>.rmdoc + <name>.png (+ tablet/)
 ├── calibration/    test notebooks
 └── *.*             anything loose here is scratch (git-ignored)

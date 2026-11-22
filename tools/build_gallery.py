@@ -81,6 +81,8 @@ def main() -> None:
 
     import quantum_gates
     publish(quantum_gates.build(), OUT / "symbols" / "quantum-gates", "quantum-gates")
+    import doodles
+    publish(doodles.build(), OUT / "symbols" / "doodles", "doodles")
 
     import calibration
     import fox_v2
