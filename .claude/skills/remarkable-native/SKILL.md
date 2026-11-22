@@ -324,6 +324,10 @@ skill or format-notes update. Keep the facts tagged.
   sample writer leaves it out. `rmdraw.rmwriter` writes it, so don't hand-roll scenes.
 - **x is centred** in device units (0 = page middle). In rmdraw you work in mm from
   the top-left, and the conversion is done for you. Watch it when reading dumps.
+- **Opaque vs translucent [device]:** only the `shader` and `highlighter` are translucent; all
+  other pens paint opaque, **white pen included**. For a sticker that must cover ink when pasted
+  (bubbles, labels, notes), lay a white-fineliner fill under the shape first, then the shader
+  colour, then the outline (see `D.fill` in `examples/doodles.py`).
 - **White is a gap, not paint.** White fills (and near-white: all channels ≥ 230) draw
   nothing; they hide what's below. The outline is still drawn in `color` unless
   `"outline": false`, which is how to get a seamless white patch. A white pen line on
