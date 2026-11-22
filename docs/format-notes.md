@@ -131,3 +131,15 @@ This means the shader takes **arbitrary ARGB**. That's the best candidate for AW
 - `.claude/skills/remarkable-native/SKILL.md` is the working summary for future sessions. Keep its tags in step with this file.
 - Tools: `rmdraw build|svg|preview|dump|push` (`rmdraw/cli.py`). `rmdraw dump <page.rm>` is the way to read device examples. `tools/dump_rm.py` is kept as a wrapper.
 - New device findings: follow the reference-page protocol in the skill, tag them here, and add a fixture plus a test.
+
+## Solid (opaque) fills for stickers — 2026-11-22
+
+rmdraw's white fill is a gap: it draws nothing, so a lassoed shape pasted over other ink lets
+that ink show through. For sticker-like templates (`examples/doodles.py`) every filled shape
+gets an opaque base first: a contour fill of **white fineliner** strokes (1.75 mm wide, 1.4 mm
+apart), then the shader colour on top, then the outline.
+
+- **White pen ink is opaque** on the Paper Pro: it covers what is below it. [device] (user, 2026-11-22)
+- **Only the shader and the highlighter are translucent**; every other pen (fineliner, ballpoint,
+  marker, pencils, calligraphy, paintbrush) paints opaque. [device] (user, 2026-11-22)
+- So a shader colour on its own lets ink below show through; on a white-pen base it is solid.
