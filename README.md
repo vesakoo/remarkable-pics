@@ -223,6 +223,32 @@ Open the project in Claude Code and ask *"draw me an owl"* — it writes the sha
 builds the notebook, renders a preview, looks at it, fixes what's off, and hands you the
 `.rmdoc`. The owl and the fox above were made this way.
 
+## Works well with remarkable-mcp
+
+[remarkable-mcp](https://github.com/sammorrowdrums/remarkable-mcp) is an MCP server that gives
+Claude (and other assistants) access to your reMarkable library. It can read and search your
+notes, recognise handwriting, render pages as images, upload PDFs and manage folders. Use it
+for **reading** your tablet and this repo for **drawing** new notebooks.
+
+What remarkable-pics adds on top of it:
+
+| | remarkable-pics | remarkable-mcp |
+|---|---|---|
+| Shapes, curves and arcs from a description | ✅ | raw point lists only |
+| SVG → pen strokes | ✅ | – |
+| Filled areas in any colour (shader, marker, hatch) | ✅ | – |
+| Solid stickers: labels, bubbles and notes that cover what's beneath | ✅ | – |
+| Handwritten-style text as strokes | ✅ | typed text only |
+| Ready symbol libraries (AWS icons, quantum circuits, presentation doodles) | ✅ | – |
+| `.rmdoc` files for the desktop app (no developer mode) | ✅ | stroke writing over SSH only |
+| New notebooks at the full Paper Pro page size | ✅ | uses the reMarkable 2 page size |
+
+> **Note:** compared against remarkable-mcp **2.1.0** (November 2026). It is actively
+> developed, so some of these features may be added there later. Check its README for
+> the current state.
+
+Tip: run it with `--read-only` if you only want Claude to read your notes.
+
 ## Tuning on the device
 
 Fill strokes are tuned on the real screen, not just in previews. A swatch page
