@@ -124,6 +124,7 @@ This means the shader takes **arbitrary ARGB**. That's the best candidate for AW
 
 - Answered: pens ignore rgba; shader honours it (see the import test above).
 - Answered 2026-11-21 [device]: the desktop app accepts our `.rmdoc` by drag and drop (`out/owl.rmdoc`); it synced to the tablet, which showed it after a restart. Still open: which of the device's `.content` keys are required.
+- Confirmed again 2026-11-24 [device]: `out/aws-icons/aws-icons-top50.rmdoc` dragged into a folder (`rema-pics`) in the macOS desktop app. The app showed it at once with a page-1 thumbnail rendered from our strokes and "Page 1 of 4". It reached the tablet, in the same folder, within about a minute, with no restart this time.
 - Minimum speed, direction and pressure values for strokes to render with full width.
 
 ## Where these facts are used
