@@ -30,8 +30,10 @@ lives in `out/drawings/<name>/`, `out/aws-icons/` and `out/calibration/` and is 
 5. Getting it onto the tablet (only when the user wants it there):
    - **Default (no developer mode needed):** give the user `out/fox.rmdoc` to drag into
      the reMarkable desktop app, which syncs it to the tablet. **[device]** confirmed
-     2026-11-21 with the owl. The tablet showed it only after a restart, so tell the user
-     to restart the tablet if the notebook doesn't appear.
+     2026-11-21 with the owl and again 2026-11-24 with the AWS icons (dropped into a
+     folder, on the tablet within about a minute, no restart). If the notebook doesn't
+     appear, tell the user to restart the tablet. `docs/media/import-desktop-app.gif`
+     shows the steps; rebuild it with `tools/import_guide/make_gif.py`.
    - **Optional, needs SSH (developer mode):** `.venv/bin/rmdraw push out/fox.rmdoc --thumbs out/fox-thumbs`.
      The first stdout line is `installed <uuid>`, followed by any thumbnail paths.
      Later: `.venv/bin/rmdraw thumbs <uuid> -o out/fox-thumbs [--wait S]`.

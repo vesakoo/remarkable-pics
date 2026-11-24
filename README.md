@@ -56,6 +56,17 @@ outlined icon with its name written underneath, grouped by category.
   <img src="out/aws-icons/aws-icons-top50-p4.png" width="24%" alt="AWS icons: security, management, AI/ML">
 </p>
 
+### Getting it onto your tablet: drag and drop, no developer mode
+
+<p align="center">
+  <img src="docs/media/import-desktop-app.gif" width="80%" alt="Animation: an .rmdoc file is dragged from Finder into a folder in the reMarkable desktop app, the notebook appears there, and it syncs to the tablet">
+</p>
+
+Drag the `.rmdoc` from Finder onto the reMarkable desktop app, into any folder. The
+notebook appears in your library at once and syncs to the tablet through the reMarkable
+cloud (in our test, within a minute). Nothing to install on the tablet, and no
+developer mode. If it doesn't show up, restart the tablet once.
+
 ## Grow your own library with Claude
 
 The repo includes a [Claude Code skill](.claude/skills/remarkable-native/SKILL.md) that knows

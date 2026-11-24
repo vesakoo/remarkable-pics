@@ -1,0 +1,198 @@
+<!doctype html>
+<!-- One frame of the "import without developer mode" animation.
+     Open with ?t=<seconds>; tools/import_guide/make_gif.py screenshots it frame by frame.
+     Windows are simplified redrawings, not screenshots. -->
+<html><head><meta charset="utf-8"><title>Import guide frame</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:960px;height:540px;overflow:hidden;background:#ebe7df;
+  font-family:-apple-system,"Helvetica Neue",Arial,sans-serif;}
+.abs{position:absolute}
+#caption{left:0;top:16px;width:960px;text-align:center;font-size:25px;font-weight:600;color:#2b2925}
+#caption .n{display:inline-block;width:34px;height:34px;line-height:34px;border-radius:17px;
+  background:#2b2925;color:#fff;font-size:19px;margin-right:10px;vertical-align:2px}
+#sub{left:0;top:500px;width:960px;text-align:center;font-size:17px;color:#6b665c}
+.win{border-radius:10px;overflow:hidden;box-shadow:0 12px 34px rgba(0,0,0,.22)}
+.lights{position:absolute;left:12px;top:11px}
+.lights i{display:inline-block;width:11px;height:11px;border-radius:6px;margin-right:6px}
+/* Finder */
+#finder{left:30px;top:78px;width:410px;height:400px;background:#1f1f1f;color:#e8e8e8}
+#finder .side{position:absolute;left:0;top:0;width:118px;height:100%;background:#2b2b2c;padding:44px 0 0 14px;font-size:13px;color:#cfcfcf}
+#finder .side div{height:27px}
+#finder .side .h{font-size:11px;color:#8a8a8a;height:22px;margin-top:6px}
+#finder .title{position:absolute;left:132px;top:11px;font-size:14px;font-weight:700}
+#finder .hdr{position:absolute;left:118px;right:0;top:40px;height:24px;border-bottom:1px solid #3a3a3a;font-size:11px;color:#9a9a9a;padding:5px 0 0 34px}
+.row{position:absolute;left:122px;right:6px;height:25px;font-size:13px;padding-top:5px;border-radius:5px;white-space:nowrap}
+.row .ic{display:inline-block;width:15px;height:12px;margin-right:6px;vertical-align:-1px;border-radius:2px}
+.fold{background:#5aa7f0}
+.png{background:#eee;border:1px solid #c33;width:11px!important;height:14px!important}
+.doc{background:#f4f4f4;width:11px!important;height:14px!important}
+/* reMarkable desktop app (simplified) */
+#app{left:470px;top:78px;width:460px;height:400px;background:#f7f4ee;color:#2b2925}
+#app .bar{position:absolute;left:0;right:0;top:0;height:32px;background:#fff;border-bottom:1px solid #e3ded4}
+#app .side{position:absolute;left:0;top:32px;bottom:0;width:104px;border-right:1px solid #e3ded4;padding:14px 0 0 12px;font-size:12.5px}
+#app .side div{height:30px}
+#app .side .sel{background:#e8e3d8;margin-left:-12px;padding-left:12px;padding-top:6px;height:30px}
+#app .tools{position:absolute;left:124px;top:46px;font-size:12px;word-spacing:2px}
+#app .tools span{margin-right:16px}
+#app .crumb{position:absolute;left:124px;top:80px;font-size:23px;font-family:Georgia,serif}
+#app .crumb small{font-family:-apple-system,"Helvetica Neue",Arial,sans-serif;font-size:15px;color:#555}
+#drop{left:116px;top:120px;width:332px;height:268px;border:2px dashed #3b82f6;border-radius:10px;background:rgba(59,130,246,.07)}
+.card{width:104px}
+.card .th{width:104px;height:139px;background:#fff center/cover no-repeat;border-radius:4px;box-shadow:0 1px 4px rgba(0,0,0,.18);
+  background-image:url(../../out/aws-icons/aws-icons-top50-p1.png)}
+.card .nm{font-size:11px;margin-top:6px;font-weight:600;line-height:1.25}
+.card .pg{font-size:10px;color:#777}
+/* ghost while dragging */
+#ghost{width:200px;font-size:12px;color:#fff}
+#ghost .doc{display:inline-block;width:22px!important;height:28px!important;border-radius:3px;vertical-align:middle;margin-right:6px;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+#ghost span{background:#2f6fe0;border-radius:4px;padding:2px 6px}
+/* scene 2 */
+#scene2{left:0;top:0;width:960px;height:540px}
+#tablet{left:540px;top:78px;width:300px;height:400px;border-radius:22px;background:#2d2d2d;padding:16px;box-shadow:0 14px 36px rgba(0,0,0,.28)}
+#screen{width:100%;height:100%;background:#f3f2ef;border-radius:6px;position:relative;overflow:hidden;color:#222}
+#screen .t{position:absolute;left:14px;top:14px;font-size:19px;font-family:Georgia,serif}
+#screen .t small{font-family:-apple-system,"Helvetica Neue",Arial,sans-serif;font-size:13px;color:#555}
+#laptop{left:110px;top:200px}
+#cloud{left:330px;top:150px;font-size:13px;color:#6b665c;text-align:center;width:150px}
+.dot{width:10px;height:10px;border-radius:5px;background:#3b82f6}
+</style></head>
+<body>
+<div id="caption" class="abs"></div>
+
+<div id="scene1" class="abs" style="left:0;top:0;width:960px;height:540px">
+  <div id="finder" class="abs win">
+    <div class="side">
+      <div>Recents</div><div>Shared</div><div class="h">Favorites</div>
+      <div>Applications</div><div>Desktop</div><div>Documents</div><div>Downloads</div>
+      <div class="h">Locations</div><div>iCloud Drive</div><div>Home</div>
+    </div>
+    <div class="lights"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
+    <div class="title">remarkable-pics</div>
+    <div class="hdr">Name</div>
+    <div id="rows"></div>
+  </div>
+
+  <div id="app" class="abs win">
+    <div class="bar"><div class="lights"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
+      <div style="position:absolute;left:78px;top:8px;font-size:13px;font-weight:700">reMarkable</div></div>
+    <div class="side"><div class="sel">My files</div><div>Notebooks</div><div>PDFs</div><div>Ebooks</div><div>Favorites</div><div>Tags</div></div>
+    <div class="tools"><span>‹ Back</span><span>Notebook</span><span>Folder</span><span>Import</span></div>
+    <div class="crumb">My files <small>&nbsp;›&nbsp; Symbols</small></div>
+    <div id="drop" class="abs"></div>
+    <div id="card1" class="abs card" style="left:128px;top:132px">
+      <div class="th"></div><div class="nm">AWS Icons – Top 50 (v2)</div><div class="pg">Page 1 of 4</div>
+    </div>
+  </div>
+</div>
+
+<div id="scene2" class="abs">
+  <svg id="laptop" class="abs" width="170" height="120" viewBox="0 0 170 120">
+    <rect x="20" y="6" width="130" height="86" rx="7" fill="#2d2d2d"/>
+    <rect x="27" y="13" width="116" height="72" rx="2" fill="#f7f4ee"/>
+    <rect x="40" y="24" width="28" height="38" fill="#fff" stroke="#ccc"/>
+    <rect x="44" y="29" width="8" height="8" fill="#f08a24"/><rect x="55" y="29" width="8" height="8" fill="#f08a24"/>
+    <rect x="44" y="41" width="8" height="8" fill="#f08a24"/><rect x="55" y="41" width="8" height="8" fill="#7aa83a"/>
+    <path d="M4 96 H166 L156 108 H14 Z" fill="#bdb8ae"/>
+    <text x="85" y="118" font-size="12" text-anchor="middle" fill="#6b665c" font-family="-apple-system,Helvetica">Desktop app</text>
+  </svg>
+  <div id="cloud" class="abs">
+    <svg width="90" height="60" viewBox="0 0 90 60"><path d="M24 50 H70 a15 15 0 0 0 0-30 a20 20 0 0 0-38-4 a14 14 0 0 0-8 34 Z" fill="#fff" stroke="#bdb8ae" stroke-width="2"/></svg>
+    <div>reMarkable cloud sync</div>
+  </div>
+  <svg class="abs" style="left:0;top:0" width="960" height="540"><path d="M290 250 L410 200 L540 265" fill="none" stroke="#bdb8ae" stroke-width="2" stroke-dasharray="5 6"/></svg>
+  <div id="dots"></div>
+  <div id="tablet" class="abs"><div id="screen">
+    <div class="t">My files <small>›&nbsp;Symbols</small></div>
+    <div id="card2" class="abs card" style="left:16px;top:58px">
+      <div class="th"></div><div class="nm">AWS Icons – Top 50 (v2)</div><div class="pg">Page 1 of 4</div>
+    </div>
+  </div></div>
+</div>
+
+<div id="ghost" class="abs"><i class="doc"></i><span>aws-icons-top50.rmdoc</span></div>
+<svg id="cursor" class="abs" width="22" height="30" viewBox="0 0 22 30"><path d="M2 2 L2 24 L7.5 18.5 L11 27 L14.5 25.5 L11 17.5 L18.5 17.5 Z" fill="#111" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
+<div id="sub" class="abs">No developer mode · no cables · no setup on the tablet</div>
+<div id="fade" class="abs" style="left:0;top:0;width:960px;height:540px;background:#ebe7df;pointer-events:none"></div>
+
+<script>
+const ROWS = [
+  [0, "fold", "docs"], [0, "fold", "examples"], [0, "fold", "out", true],
+  [1, "fold", "aws-icons", true], [2, "png", "aws-icons-top50-p1.png"], [2, "png", "aws-icons-top50-p2.png"],
+  [2, "png", "aws-icons-top50-p3.png"], [2, "png", "aws-icons-top50-p4.png"],
+  [2, "doc", "aws-icons-top50.rmdoc"], [2, "fold", "tablet"], [1, "fold", "calibration"],
+  [1, "fold", "drawings"], [1, "fold", "symbols"],
+];
+const TARGET = 8, ROW_Y0 = 70, ROW_H = 25;
+const rows = document.getElementById("rows");
+ROWS.forEach(([ind, kind, name, open], i) => {
+  const d = document.createElement("div");
+  d.className = "row"; d.id = "r" + i;
+  d.style.top = (ROW_Y0 + i * ROW_H) + "px";
+  d.style.paddingLeft = (12 + ind * 18) + "px";
+  d.innerHTML = `<span style="color:#888;display:inline-block;width:12px">${kind === "fold" ? (open ? "⌄" : "›") : ""}</span><i class="ic ${kind}"></i>${name}`;
+  rows.appendChild(d);
+});
+
+const t = parseFloat(new URLSearchParams(location.search).get("t") || "0");
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const ease = x => { x = clamp(x); return x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2; };
+const seg = (a, b) => ease((t - a) / (b - a));
+const lerp = (p, q, k) => [p[0] + (q[0] - p[0]) * k, p[1] + (q[1] - p[1]) * k];
+const $ = id => document.getElementById(id);
+const place = (el, [x, y]) => { el.style.left = x + "px"; el.style.top = y + "px"; };
+
+// page coordinates of key points
+const START = [760, 505];
+const FILE = [30 + 122 + 120, 78 + ROW_Y0 + TARGET * ROW_H + 13];
+const DROP = [470 + 128 + 52, 78 + 132 + 60];
+
+let cur, ghost = 0, pressed = false;
+if (t < 0.6) cur = START;
+else if (t < 1.4) cur = lerp(START, FILE, seg(0.6, 1.4));
+else if (t < 1.7) { cur = FILE; pressed = t >= 1.5; }
+else if (t < 3.3) { cur = lerp(FILE, DROP, seg(1.7, 3.2)); pressed = true; ghost = 1; }
+else cur = DROP;
+place($("cursor"), cur);
+$("ghost").style.opacity = ghost;
+place($("ghost"), [cur[0] + 10, cur[1] + 12]);
+if (pressed || t >= 1.5) {
+  const r = $("r" + TARGET); r.style.background = t < 3.3 ? "#2f6fe0" : "#3a3a3c"; r.style.color = "#fff";
+}
+const overApp = ghost && cur[0] > 470 + 110;
+$("drop").style.opacity = overApp ? 1 : 0;
+const pop = seg(3.3, 3.7);
+$("card1").style.opacity = pop;
+$("card1").style.transform = `scale(${0.85 + 0.15 * pop})`;
+
+// scene switch
+const s2 = seg(5.0, 5.6);
+$("scene1").style.opacity = 1 - s2;
+$("scene2").style.opacity = s2;
+$("cursor").style.opacity = 1 - s2;
+// sync dots travel laptop -> cloud -> tablet
+const dots = $("dots");
+if (t > 5.6 && t < 7.0) {
+  const k = (t - 5.6) / 1.4;
+  for (let j = 0; j < 3; j++) {
+    const u = clamp(k * 1.3 - j * 0.15);
+    if (u <= 0 || u >= 1) continue;
+    const p = u < .5 ? lerp([285, 245], [405, 195], u * 2) : lerp([405, 195], [535, 260], (u - .5) * 2);
+    const d = document.createElement("div"); d.className = "abs dot"; place(d, p); dots.appendChild(d);
+  }
+}
+const pop2 = seg(6.9, 7.3);
+$("card2").style.opacity = pop2;
+$("card2").style.transform = `scale(${0.85 + 0.15 * pop2})`;
+
+// captions
+let cap;
+if (t < 3.3) cap = `<span class="n">1</span>Drag the .rmdoc onto the reMarkable desktop app`;
+else if (t < 5.3) cap = `<span class="n">1</span>Drop it into any folder: it's in your library`;
+else cap = `<span class="n">2</span>It syncs to your tablet, ready to lasso and copy`;
+$("caption").innerHTML = cap;
+$("sub").style.opacity = seg(7.3, 7.8);
+// loop fade
+$("fade").style.opacity = Math.max(1 - seg(0, 0.35), seg(9.6, 10));
+</script>
+</body></html>
