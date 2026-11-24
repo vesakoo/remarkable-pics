@@ -1,0 +1,32 @@
+<!doctype html>
+<!-- Square (1080x1080) social-media frame: a heading, the 16:9 animation frame, the repo link.
+     Open with ?t=<seconds>&lang=en|fi; tools/import_guide/make_video.py screenshots it. -->
+<html><head><meta charset="utf-8"><title>Import guide square</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1080px;height:1080px;overflow:hidden;background:#ebe7df;color:#2b2925;
+  font-family:-apple-system,"Helvetica Neue",Arial,sans-serif}
+#head{position:absolute;left:0;top:70px;width:1080px;text-align:center}
+#head h1{font-size:50px;font-weight:800;letter-spacing:-.5px}
+#head p{font-size:25px;color:#6b665c;margin-top:16px}
+iframe{position:absolute;left:0;top:236px;width:960px;height:540px;border:0;
+  transform:scale(1.125);transform-origin:0 0}
+#foot{position:absolute;left:0;top:930px;width:1080px;text-align:center;font-size:27px;font-weight:600}
+#foot span{background:#2b2925;color:#fff;border-radius:30px;padding:12px 28px}
+</style></head>
+<body>
+<div id="head"><h1></h1><p></p></div>
+<iframe id="f"></iframe>
+<div id="foot"><span>github.com/vesakoo/remarkable-pics</span></div>
+<script>
+const q = new URLSearchParams(location.search);
+const lang = q.get("lang") || "en";
+const [h, p] = {
+  en: ["Onto your reMarkable in seconds", "Free symbol libraries as real, editable pen strokes"],
+  fi: ["reMarkablelle sekunneissa", "Ilmaiset symbolikirjastot aitoina, muokattavina kynänvetoina"],
+}[lang];
+document.querySelector("h1").textContent = h;
+document.querySelector("#head p").textContent = p;
+document.getElementById("f").src = `anim.html?t=${q.get("t") || 0}&lang=${lang}`;
+</script>
+</body></html>

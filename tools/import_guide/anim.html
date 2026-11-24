@@ -54,7 +54,7 @@ html,body{width:960px;height:540px;overflow:hidden;background:#ebe7df;
 #screen .t{position:absolute;left:14px;top:14px;font-size:19px;font-family:Georgia,serif}
 #screen .t small{font-family:-apple-system,"Helvetica Neue",Arial,sans-serif;font-size:13px;color:#555}
 #laptop{left:110px;top:200px}
-#cloud{left:330px;top:150px;font-size:13px;color:#6b665c;text-align:center;width:150px}
+#cloud{left:295px;top:150px;font-size:13px;color:#6b665c;text-align:center;width:220px}
 .dot{width:10px;height:10px;border-radius:5px;background:#3b82f6}
 </style></head>
 <body>
@@ -94,11 +94,11 @@ html,body{width:960px;height:540px;overflow:hidden;background:#ebe7df;
     <rect x="44" y="29" width="8" height="8" fill="#f08a24"/><rect x="55" y="29" width="8" height="8" fill="#f08a24"/>
     <rect x="44" y="41" width="8" height="8" fill="#f08a24"/><rect x="55" y="41" width="8" height="8" fill="#7aa83a"/>
     <path d="M4 96 H166 L156 108 H14 Z" fill="#bdb8ae"/>
-    <text x="85" y="118" font-size="12" text-anchor="middle" fill="#6b665c" font-family="-apple-system,Helvetica">Desktop app</text>
+    <text id="lapl" x="85" y="118" font-size="12" text-anchor="middle" fill="#6b665c" font-family="-apple-system,Helvetica">Desktop app</text>
   </svg>
   <div id="cloud" class="abs">
     <svg width="90" height="60" viewBox="0 0 90 60"><path d="M24 50 H70 a15 15 0 0 0 0-30 a20 20 0 0 0-38-4 a14 14 0 0 0-8 34 Z" fill="#fff" stroke="#bdb8ae" stroke-width="2"/></svg>
-    <div>reMarkable cloud sync</div>
+    <div id="cloudl">reMarkable cloud sync</div>
   </div>
   <svg class="abs" style="left:0;top:0" width="960" height="540"><path d="M290 250 L410 200 L540 265" fill="none" stroke="#bdb8ae" stroke-width="2" stroke-dasharray="5 6"/></svg>
   <div id="dots"></div>
@@ -112,7 +112,7 @@ html,body{width:960px;height:540px;overflow:hidden;background:#ebe7df;
 
 <div id="ghost" class="abs"><i class="doc"></i><span>aws-icons-top50.rmdoc</span></div>
 <svg id="cursor" class="abs" width="22" height="30" viewBox="0 0 22 30"><path d="M2 2 L2 24 L7.5 18.5 L11 27 L14.5 25.5 L11 17.5 L18.5 17.5 Z" fill="#111" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
-<div id="sub" class="abs">No developer mode · no cables · no setup on the tablet</div>
+<div id="sub" class="abs"></div>
 <div id="fade" class="abs" style="left:0;top:0;width:960px;height:540px;background:#ebe7df;pointer-events:none"></div>
 
 <script>
@@ -134,7 +134,16 @@ ROWS.forEach(([ind, kind, name, open], i) => {
   rows.appendChild(d);
 });
 
-const t = parseFloat(new URLSearchParams(location.search).get("t") || "0");
+const params = new URLSearchParams(location.search);
+const t = parseFloat(params.get("t") || "0");
+const STR = {
+  en: ["Drag the .rmdoc onto the reMarkable desktop app", "Drop it into any folder: it's in your library",
+       "It syncs to your tablet, ready to lasso and copy", "No developer mode · no cables · no setup on the tablet",
+       "Desktop app", "reMarkable cloud sync"],
+  fi: ["Raahaa .rmdoc reMarkablen työpöytäsovellukseen", "Pudota mihin tahansa kansioon: se on kirjastossasi",
+       "Se synkronoituu tabletille, valmiina lassoon ja kopiointiin", "Ei kehittäjätilaa · ei kaapeleita · ei asennuksia tabletille",
+       "Työpöytäsovellus", "reMarkable-pilvisynkronointi"],
+}[params.get("lang") || "en"];
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
 const ease = x => { x = clamp(x); return x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2; };
 const seg = (a, b) => ease((t - a) / (b - a));
@@ -187,10 +196,11 @@ $("card2").style.transform = `scale(${0.85 + 0.15 * pop2})`;
 
 // captions
 let cap;
-if (t < 3.3) cap = `<span class="n">1</span>Drag the .rmdoc onto the reMarkable desktop app`;
-else if (t < 5.3) cap = `<span class="n">1</span>Drop it into any folder: it's in your library`;
-else cap = `<span class="n">2</span>It syncs to your tablet, ready to lasso and copy`;
+if (t < 3.3) cap = `<span class="n">1</span>${STR[0]}`;
+else if (t < 5.3) cap = `<span class="n">1</span>${STR[1]}`;
+else cap = `<span class="n">2</span>${STR[2]}`;
 $("caption").innerHTML = cap;
+$("sub").textContent = STR[3]; $("lapl").textContent = STR[4]; $("cloudl").textContent = STR[5];
 $("sub").style.opacity = seg(7.3, 7.8);
 // loop fade
 $("fade").style.opacity = Math.max(1 - seg(0, 0.35), seg(9.6, 10));
