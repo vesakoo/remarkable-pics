@@ -237,8 +237,9 @@ What remarkable-pics adds on top of it:
 | Shapes, curves and arcs from a description | ✅ | raw point lists only |
 | SVG → pen strokes | ✅ | – |
 | Filled areas in any colour (shader, marker, hatch) | ✅ | – |
+| Solid stickers: labels, bubbles and notes that cover what's beneath | ✅ | – |
 | Handwritten-style text as strokes | ✅ | typed text only |
-| Ready symbol libraries (AWS icons, quantum circuits) | ✅ | – |
+| Ready symbol libraries (AWS icons, quantum circuits, presentation doodles) | ✅ | – |
 | `.rmdoc` files for the desktop app (no developer mode) | ✅ | stroke writing over SSH only |
 | New notebooks at the full Paper Pro page size | ✅ | uses the reMarkable 2 page size |
 
